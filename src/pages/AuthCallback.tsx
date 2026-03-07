@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext.tsx';
+import { exchangeCode } from '../auth/pkce.ts';
 
 export default function AuthCallback() {
   const { login } = useAuth();
@@ -12,20 +13,29 @@ export default function AuthCallback() {
     handled.current = true;
 
     const params = new URLSearchParams(window.location.search);
-    const tokensParam = params.get('tokens');
+    const error = params.get('error');
+    const code = params.get('code');
 
-    if (!tokensParam) {
+    if (error) {
+      console.error('[AuthCallback] OIDC error:', error, params.get('error_description'));
       navigate('/login', { replace: true });
       return;
     }
 
-    try {
-      const tokens = JSON.parse(atob(tokensParam.replace(/-/g, '+').replace(/_/g, '/')));
-      login(tokens);
-      navigate('/', { replace: true });
-    } catch {
+    if (!code) {
       navigate('/login', { replace: true });
+      return;
     }
+
+    exchangeCode(code)
+      .then((tokens) => {
+        login(tokens);
+        navigate('/', { replace: true });
+      })
+      .catch((err) => {
+        console.error('[AuthCallback] token exchange failed:', err);
+        navigate('/login', { replace: true });
+      });
   }, [login, navigate]);
 
   return (

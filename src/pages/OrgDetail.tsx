@@ -87,11 +87,12 @@ export default function OrgDetail() {
               )}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-0.5">
-                  <p className="font-medium text-white truncate">{badge.text_condition}</p>
+                  <p className="font-medium text-white truncate">{badge.name}</p>
                   {!badge.visible_for_users && (
                     <span className="text-xs bg-yellow-900 text-yellow-300 px-1.5 py-0.5 rounded shrink-0">hidden</span>
                   )}
                 </div>
+                <p className="text-xs text-gray-400 truncate">{badge.text_condition}</p>
                 <p className="text-xs text-gray-500 truncate">{badge.text_awarded}</p>
                 <div className="flex gap-2 mt-1">
                   <span className="text-xs text-gray-600 bg-gray-800 px-1.5 py-0.5 rounded">{badge.badge_type}</span>
@@ -111,7 +112,7 @@ export default function OrgDetail() {
                   Edit
                 </Link>
                 <button
-                  onClick={() => deleteBadge(badge.id, badge.text_condition)}
+                  onClick={() => deleteBadge(badge.id, badge.name)}
                   className="text-xs bg-red-950 hover:bg-red-900 text-red-400 px-3 py-1.5 rounded transition-colors"
                 >
                   Delete

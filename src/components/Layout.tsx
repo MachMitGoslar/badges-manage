@@ -39,12 +39,19 @@ export default function Layout({ children, title, back }: Props) {
             </>
           )}
         </div>
-        <button
-          onClick={handleLogout}
-          className="text-xs text-gray-500 hover:text-gray-300 transition-colors"
-        >
-          Sign out
-        </button>
+        <div className="flex items-center gap-4">
+          {import.meta.env.DEV && (
+            <Link to="/debug" className="text-xs text-gray-600 hover:text-gray-400 transition-colors">
+              Debug
+            </Link>
+          )}
+          <button
+            onClick={handleLogout}
+            className="text-xs text-gray-500 hover:text-gray-300 transition-colors"
+          >
+            Sign out
+          </button>
+        </div>
       </header>
       <main className="max-w-5xl mx-auto px-6 py-8">{children}</main>
     </div>

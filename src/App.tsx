@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard.tsx';
 import OrgDetail from './pages/OrgDetail.tsx';
 import BadgeForm from './pages/BadgeForm.tsx';
 import TokenManager from './pages/TokenManager.tsx';
+import DebugScreen from './pages/DebugScreen.tsx';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { token } = useAuth();
@@ -59,6 +60,16 @@ export default function App() {
           </ProtectedRoute>
         }
       />
+      {import.meta.env.DEV && (
+        <Route
+          path="/debug"
+          element={
+            <ProtectedRoute>
+              <DebugScreen />
+            </ProtectedRoute>
+          }
+        />
+      )}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

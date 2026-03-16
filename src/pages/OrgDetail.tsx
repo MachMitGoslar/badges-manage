@@ -6,8 +6,9 @@ import Layout from '../components/Layout.tsx';
 
 export default function OrgDetail() {
   const { orgId } = useParams<{ orgId: string }>();
-  const { token } = useAuth();
+  const { token, isMember } = useAuth();
   const queryClient = useQueryClient();
+  const canManage = isMember(orgId ?? '');
 
   const { data: orgData, isLoading: orgLoading } = useQuery({
     queryKey: ['org', orgId],
@@ -47,25 +48,29 @@ export default function OrgDetail() {
               {org.description && <p className="text-gray-400 text-sm mt-1">{org.description}</p>}
             </div>
           </div>
-          <div className="flex gap-3">
-            <Link
-              to={`/orgs/${orgId}/tokens`}
-              className="bg-gray-800 hover:bg-gray-700 text-sm text-gray-200 px-4 py-2 rounded-lg transition-colors"
-            >
-              Grant Tokens
-            </Link>
-          </div>
+          {canManage && (
+            <div className="flex gap-3">
+              <Link
+                to={`/orgs/${orgId}/tokens`}
+                className="bg-gray-800 hover:bg-gray-700 text-sm text-gray-200 px-4 py-2 rounded-lg transition-colors"
+              >
+                Grant Tokens
+              </Link>
+            </div>
+          )}
         </div>
       )}
 
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold text-white">Badge Templates</h2>
-        <Link
-          to={`/orgs/${orgId}/badges/new`}
-          className="bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
-        >
-          + New Badge
-        </Link>
+        {canManage && (
+          <Link
+            to={`/orgs/${orgId}/badges/new`}
+            className="bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+          >
+            + New Badge
+          </Link>
+        )}
       </div>
 
       {badgesLoading && <p className="text-gray-400">Loading badges…</p>}
@@ -104,20 +109,22 @@ export default function OrgDetail() {
                   ))}
                 </div>
               </div>
-              <div className="flex gap-2 shrink-0">
-                <Link
-                  to={`/orgs/${orgId}/badges/${badge.id}`}
-                  className="text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1.5 rounded transition-colors"
-                >
-                  Edit
-                </Link>
-                <button
-                  onClick={() => deleteBadge(badge.id, badge.name)}
-                  className="text-xs bg-red-950 hover:bg-red-900 text-red-400 px-3 py-1.5 rounded transition-colors"
-                >
-                  Delete
-                </button>
-              </div>
+              {canManage && (
+                <div className="flex gap-2 shrink-0">
+                  <Link
+                    to={`/orgs/${orgId}/badges/${badge.id}`}
+                    className="text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1.5 rounded transition-colors"
+                  >
+                    Edit
+                  </Link>
+                  <button
+                    onClick={() => deleteBadge(badge.id, badge.name)}
+                    className="text-xs bg-red-950 hover:bg-red-900 text-red-400 px-3 py-1.5 rounded transition-colors"
+                  >
+                    Delete
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </div>

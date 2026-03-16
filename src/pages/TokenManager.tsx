@@ -17,8 +17,16 @@ function isExhausted(t: GrantToken): boolean {
 
 export default function TokenManager() {
   const { orgId } = useParams<{ orgId: string }>();
-  const { token } = useAuth();
+  const { token, isMember } = useAuth();
   const queryClient = useQueryClient();
+
+  if (!isMember(orgId ?? '')) {
+    return (
+      <Layout back={{ to: `/orgs/${orgId}`, label: 'Organisation' }} title="Grant Tokens">
+        <p className="text-gray-400">You are not a member of this organisation.</p>
+      </Layout>
+    );
+  }
 
   const { data: badgesData } = useQuery({
     queryKey: ['org-badges', orgId],

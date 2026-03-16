@@ -4,7 +4,7 @@ import { useAuth } from '../auth/AuthContext.tsx';
 import { api, type Organisation } from '../api/client.ts';
 import Layout from '../components/Layout.tsx';
 
-function OrgCard({ org }: { org: Organisation }) {
+function OrgCard({ org, isMyOrg }: { org: Organisation; isMyOrg: boolean }) {
   return (
     <Link
       to={`/orgs/${org.id}`}
@@ -19,7 +19,12 @@ function OrgCard({ org }: { org: Organisation }) {
           </div>
         )}
         <div>
-          <p className="font-medium text-white">{org.name ?? <span className="text-gray-500 italic">Unnamed</span>}</p>
+          <div className="flex items-center gap-2">
+            <p className="font-medium text-white">{org.name ?? <span className="text-gray-500 italic">Unnamed</span>}</p>
+            {isMyOrg && (
+              <span className="text-xs bg-blue-900 text-blue-300 px-1.5 py-0.5 rounded font-medium">your org</span>
+            )}
+          </div>
           {org.city && <p className="text-xs text-gray-500">{org.city}</p>}
         </div>
       </div>
@@ -53,7 +58,7 @@ export default function Dashboard() {
             <section>
               <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">My Organisations</h2>
               <div className="grid gap-3">
-                {myOrgs.map((org) => <OrgCard key={org.id} org={org} />)}
+                {myOrgs.map((org) => <OrgCard key={org.id} org={org} isMyOrg />)}
               </div>
             </section>
           )}
@@ -64,7 +69,7 @@ export default function Dashboard() {
                 <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Other Organisations</h2>
               )}
               <div className="grid gap-3">
-                {otherOrgs.map((org) => <OrgCard key={org.id} org={org} />)}
+                {otherOrgs.map((org) => <OrgCard key={org.id} org={org} isMyOrg={false} />)}
               </div>
             </section>
           )}

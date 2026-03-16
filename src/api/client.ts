@@ -28,6 +28,9 @@ async function request<T>(
       const data = await res.json();
       message = data.message ?? message;
     } catch { /* ignore */ }
+    if (res.status === 401) {
+      window.dispatchEvent(new Event('auth:unauthorized'));
+    }
     throw new ApiError(res.status, message);
   }
 
@@ -106,6 +109,14 @@ export interface CreateBadgeInput {
   // type-specific
   tiers?: { level: number; amount: number; imageURL?: string; name?: string | null; text_awarded?: string | null }[];
   required_badge_ids?: string[];
+}
+
+export interface GrantLogEntry {
+  id: string;
+  user_id: string;
+  granted_at: string;
+  status: 'success' | 'failed' | 'already_earned' | 'token_expired' | 'token_exhausted';
+  error_message: string | null;
 }
 
 export interface CreateTokenInput {

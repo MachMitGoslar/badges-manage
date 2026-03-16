@@ -18,36 +18,36 @@ export default function Layout({ children, title, back }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100">
-      <header className="border-b border-gray-800 bg-gray-900 px-6 py-3 flex items-center justify-between">
+    <div className="min-h-screen bg-[--color-page-bg]">
+      <header className="site-header">
         <div className="flex items-center gap-3">
-          <Link to="/" className="text-sm font-semibold text-white hover:text-blue-400 transition-colors">
+          <Link to="/" className="nav-link font-semibold">
             Badges Admin
           </Link>
           {back && (
             <>
-              <span className="text-gray-600">/</span>
-              <Link to={back.to} className="text-sm text-gray-400 hover:text-white transition-colors">
+              <span className="text-[--color-dp-400]">/</span>
+              <Link to={back.to} className="nav-link">
                 {back.label}
               </Link>
             </>
           )}
           {title && (
             <>
-              <span className="text-gray-600">/</span>
-              <span className="text-sm text-gray-300">{title}</span>
+              <span className="text-[--color-dp-400]">/</span>
+              <span className="text-sm text-[--color-dp-800]">{title}</span>
             </>
           )}
         </div>
         <div className="flex items-center gap-4">
           {import.meta.env.DEV && (
-            <Link to="/debug" className="text-xs text-gray-600 hover:text-gray-400 transition-colors">
+            <Link to="/debug" className="nav-link text-xs">
               Debug
             </Link>
           )}
           <button
             onClick={handleLogout}
-            className="text-xs text-gray-500 hover:text-gray-300 transition-colors"
+            className="text-xs text-[--color-dp-800] hover:text-[--color-mango-1200] transition-colors bg-transparent border-none cursor-pointer p-0"
           >
             Sign out
           </button>

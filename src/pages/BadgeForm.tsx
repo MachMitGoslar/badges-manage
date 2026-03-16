@@ -6,6 +6,7 @@ import { api, ApiError, type BadgeTemplate, type CreateBadgeInput } from '../api
 import Layout from '../components/Layout.tsx';
 import CenterpieceSelector from '../components/CenterpieceSelector.tsx';
 import BadgePreview from '../components/BadgePreview.tsx';
+import FramePreview from '../components/FramePreview.tsx';
 
 type BadgeType = 'normal' | 'tiered' | 'collection';
 type TierRow = { amount: number; imageURL: string; name: string; text_awarded: string };
@@ -67,14 +68,14 @@ const TYPE_META: Record<BadgeType, { label: string; description: string; Icon: I
 };
 
 const TYPE_COLORS: Record<BadgeType, string> = {
-  normal:     'text-blue-400',
-  tiered:     'text-yellow-400',
-  collection: 'text-purple-400',
+  normal:     'text-[--color-info-1000]',
+  tiered:     'text-[--color-mango-900]',
+  collection: 'text-purple-700',
 };
 
 // Stage labels and colours for tiered tiers (3 stages × 4 levels = 12 max)
 const STAGE_NAMES = ['Bronze', 'Silver', 'Gold'];
-const STAGE_COLORS = ['text-yellow-700', 'text-gray-400', 'text-yellow-400'];
+const STAGE_COLORS = ['text-yellow-700', 'text-[--color-dp-600]', 'text-[--color-mango-900]'];
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -256,8 +257,8 @@ export default function BadgeForm() {
   if (step === 'pick-type') {
     return (
       <Layout back={{ to: `/orgs/${orgId}`, label: 'Badges' }} title="New Badge">
-        <h1 className="text-2xl font-bold text-white mb-2">New Badge</h1>
-        <p className="text-gray-400 text-sm mb-8">Choose the type of badge you want to create.</p>
+        <h1 className="text-2xl font-bold text-[--color-dp-1400] mb-2">New Badge</h1>
+        <p className="text-[--color-dp-800] text-sm mb-8">Choose the type of badge you want to create.</p>
 
         <div className="max-w-lg space-y-3">
           {(Object.keys(TYPE_META) as BadgeType[]).map((type) => {
@@ -267,16 +268,16 @@ export default function BadgeForm() {
                 key={type}
                 type="button"
                 onClick={() => selectType(type)}
-                className="w-full bg-gray-900 border border-gray-800 hover:border-gray-600 rounded-xl px-5 py-4 flex items-center gap-4 text-left transition-colors group"
+                className="w-full card px-5 py-4 flex items-center gap-4 text-left group cursor-pointer"
               >
                 <div className={`shrink-0 ${TYPE_COLORS[type]}`}>
                   <Icon className="w-8 h-8" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-white">{label}</p>
-                  <p className="text-sm text-gray-400 mt-0.5">{description}</p>
+                  <p className="font-semibold text-[--color-dp-1400]">{label}</p>
+                  <p className="text-sm text-[--color-dp-800] mt-0.5">{description}</p>
                 </div>
-                <span className="text-gray-600 group-hover:text-gray-400 transition-colors shrink-0">→</span>
+                <span className="text-[--color-dp-400] group-hover:text-[--color-dp-800] transition-colors shrink-0">→</span>
               </button>
             );
           })}
@@ -292,38 +293,36 @@ export default function BadgeForm() {
 
   return (
     <Layout back={{ to: `/orgs/${orgId}`, label: 'Badges' }} title={isEdit ? 'Edit Badge' : 'New Badge'}>
-      <h1 className="text-2xl font-bold text-white mb-6">{isEdit ? 'Edit Badge' : 'New Badge'}</h1>
+      <h1 className="text-2xl font-bold text-[--color-dp-1400] mb-6">{isEdit ? 'Edit Badge' : 'New Badge'}</h1>
 
       <form onSubmit={handleSubmit} className="max-w-lg space-y-5">
         {error && (
-          <div className="bg-red-950 border border-red-800 text-red-300 text-sm px-4 py-3 rounded-lg">
-            {error}
-          </div>
+          <div className="alert-error">{error}</div>
         )}
 
         {/* Type indicator */}
-        <div className="flex items-center justify-between bg-gray-900 border border-gray-800 rounded-lg px-4 py-2.5">
+        <div className="card px-4 py-2.5 flex items-center justify-between">
           <div className={`flex items-center gap-2 ${TYPE_COLORS[selectedType]}`}>
             <TypeIcon className="w-4 h-4 shrink-0" />
-            <span className="text-sm font-medium text-white">{typeLabel}</span>
+            <span className="text-sm font-medium text-[--color-dp-1400]">{typeLabel}</span>
           </div>
           {!isEdit && (
             <button
               type="button"
               onClick={() => setStep('pick-type')}
-              className="text-xs text-gray-500 hover:text-gray-300 transition-colors"
+              className="btn btn-sm btn-tertiary"
             >
               Change
             </button>
           )}
           {isEdit && (
-            <span className="text-xs text-gray-600">Type locked</span>
+            <span className="text-xs text-[--color-dp-600]">Type locked</span>
           )}
         </div>
 
         <Field label="Name" required>
           <input
-            className={input}
+            className="input input-sm"
             value={form.name}
             onChange={(e) => field('name', e.target.value)}
             placeholder="e.g. First Hackathon"
@@ -333,7 +332,7 @@ export default function BadgeForm() {
 
         <Field label="Condition" required>
           <input
-            className={input}
+            className="input input-sm"
             value={form.text_condition}
             onChange={(e) => field('text_condition', e.target.value)}
             placeholder="e.g. Attended first hackathon"
@@ -343,7 +342,7 @@ export default function BadgeForm() {
 
         <Field label="Awarded text">
           <input
-            className={input}
+            className="input input-sm"
             value={form.text_awarded}
             onChange={(e) => field('text_awarded', e.target.value)}
             placeholder="e.g. Congratulations on attending!"
@@ -352,10 +351,10 @@ export default function BadgeForm() {
 
         {/* Centerpiece — shared across all tiers for tiered badges */}
         <div>
-          <label className="block text-sm text-gray-400 mb-1.5">
+          <label className="label">
             Centerpiece image
             {selectedType === 'tiered' && (
-              <span className="text-gray-600 font-normal ml-2">· shared across all stages</span>
+              <span className="text-[--color-dp-600] font-normal ml-2">· shared across all stages</span>
             )}
           </label>
           <div className="flex items-start gap-4">
@@ -375,21 +374,21 @@ export default function BadgeForm() {
         {/* ── Frame picker — normal & collection badges ──────────────────────── */}
         {(selectedType === 'normal' || selectedType === 'collection') && (
           <div>
-            <label className="block text-sm text-gray-400 mb-2">Badge frame</label>
+            <label className="label mb-2">Badge frame</label>
             <div className="space-y-3">
               {/* Plain / no frame */}
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
                   onClick={() => { setFrameTier(null); setFrameLevel(null); }}
-                  className={`flex flex-col items-center gap-1 p-1.5 rounded-lg border transition-colors ${frameTier === null ? 'border-blue-500 bg-blue-950' : 'border-gray-700 hover:border-gray-500'}`}
+                  className={`flex flex-col items-center gap-1 p-1.5 rounded-lg border-2 transition-colors ${frameTier === null ? 'border-[--color-mango-900] bg-[--color-mango-100]' : 'border-[--color-border] hover:border-[--color-dp-400]'}`}
                 >
                   {centerpieceUrl ? (
-                    <BadgePreview centerpieceUrl={centerpieceUrl} badgeType="normal" className="w-12 h-12" />
+                    <img src={centerpieceUrl} alt="" className="w-12 h-12 rounded-lg object-contain bg-[--color-dp-100]" />
                   ) : (
-                    <div className="w-12 h-12 rounded-lg bg-gray-800 border border-gray-700 flex items-center justify-center text-gray-600 text-xs">—</div>
+                    <div className="w-12 h-12 rounded-lg bg-[--color-dp-200] border border-[--color-border] flex items-center justify-center text-[--color-dp-600] text-xs">—</div>
                   )}
-                  <span className="text-[10px] text-gray-400">Plain</span>
+                  <span className="text-[10px] text-[--color-dp-700]">Plain</span>
                 </button>
               </div>
 
@@ -400,21 +399,20 @@ export default function BadgeForm() {
                   <div className="flex flex-wrap gap-2">
                     {[1, 2, 3, 4].map((lvl) => {
                       const tier = stageIdx + 1;
-                      const tierLevel = stageIdx * 4 + lvl;
                       const selected = frameTier === tier && frameLevel === lvl;
                       return (
                         <button
                           key={lvl}
                           type="button"
                           onClick={() => { setFrameTier(tier); setFrameLevel(lvl); }}
-                          className={`flex flex-col items-center gap-1 p-1.5 rounded-lg border transition-colors ${selected ? 'border-blue-500 bg-blue-950' : 'border-gray-700 hover:border-gray-500'}`}
+                          className={`flex flex-col items-center gap-1 p-1.5 rounded-lg border-2 transition-colors ${selected ? 'border-[--color-mango-900] bg-[--color-mango-100]' : 'border-[--color-border] hover:border-[--color-dp-400]'}`}
                         >
                           {centerpieceUrl ? (
-                            <BadgePreview centerpieceUrl={centerpieceUrl} badgeType="tiered" tierLevel={tierLevel} className="w-12 h-12" />
+                            <FramePreview centerpieceUrl={centerpieceUrl} tier={tier as 1|2|3} level={lvl as 1|2|3|4} className="w-12 h-12" />
                           ) : (
-                            <div className="w-12 h-12 rounded-lg bg-gray-800 border border-gray-700" />
+                            <div className="w-12 h-12 rounded-lg bg-[--color-dp-200] border border-[--color-border]" />
                           )}
-                          <span className="text-[10px] text-gray-400">L{lvl}</span>
+                          <span className="text-[10px] text-[--color-dp-700]">L{lvl}</span>
                         </button>
                       );
                     })}
@@ -423,7 +421,7 @@ export default function BadgeForm() {
               ))}
             </div>
             {frameTier && (
-              <p className="text-xs text-gray-500 mt-2">
+              <p className="text-xs text-[--color-dp-600] mt-2">
                 Selected: {STAGE_NAMES[frameTier - 1]} Stage · Level {frameLevel} — badge will be rendered on save
               </p>
             )}
@@ -432,7 +430,7 @@ export default function BadgeForm() {
 
         <Field label="Categories (comma-separated)">
           <input
-            className={input}
+            className="input input-sm"
             value={categoryInput}
             onChange={(e) => setCategoryInput(e.target.value)}
             placeholder="e.g. event, achievement"
@@ -441,7 +439,7 @@ export default function BadgeForm() {
 
         <Field label="Points">
           <input
-            className={input}
+            className="input input-sm"
             type="number"
             min="0"
             value={form.points ?? ''}
@@ -454,12 +452,12 @@ export default function BadgeForm() {
         {selectedType === 'tiered' && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-400">Stages &amp; levels</span>
+              <span className="text-sm text-[--color-dp-800]">Stages &amp; levels</span>
               {tiers.length < 12 && (
                 <button
                   type="button"
                   onClick={addTier}
-                  className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                  className="btn btn-sm btn-tertiary"
                 >
                   + Add level
                 </button>
@@ -473,18 +471,18 @@ export default function BadgeForm() {
               const stageColor = STAGE_COLORS[stageIndex] ?? STAGE_COLORS[2];
 
               return (
-                <div key={i} className="bg-gray-900 border border-gray-700 rounded-xl p-4 space-y-3">
+                <div key={i} className="card p-4 space-y-3">
                   {/* Row header */}
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-gray-300">
+                    <span className="text-xs font-semibold text-[--color-dp-1200]">
                       <span className={stageColor}>{stageName} Stage</span>
-                      <span className="text-gray-500 ml-1.5">· Level {level}</span>
+                      <span className="text-[--color-dp-600] ml-1.5">· Level {level}</span>
                     </span>
                     {tiers.length > 1 && (
                       <button
                         type="button"
                         onClick={() => removeTier(i)}
-                        className="text-xs text-red-400 hover:text-red-300 transition-colors"
+                        className="text-xs text-[--color-ferocious-800] hover:underline transition-colors"
                       >
                         Remove
                       </button>
@@ -494,18 +492,18 @@ export default function BadgeForm() {
                   {/* Stage name + awarded text */}
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs text-gray-500 mb-1">Stage name</label>
+                      <label className="block text-xs text-[--color-dp-700] mb-1">Stage name</label>
                       <input
-                        className={input}
+                        className="input input-sm"
                         value={tier.name}
                         onChange={(e) => updateTierField(i, 'name', e.target.value)}
                         placeholder={`e.g. ${stageName} Champion`}
                       />
                     </div>
                     <div>
-                      <label className="block text-xs text-gray-500 mb-1">Awarded text</label>
+                      <label className="block text-xs text-[--color-dp-700] mb-1">Awarded text</label>
                       <input
-                        className={input}
+                        className="input input-sm"
                         value={tier.text_awarded}
                         onChange={(e) => updateTierField(i, 'text_awarded', e.target.value)}
                         placeholder="Shown when this tier is reached"
@@ -516,9 +514,9 @@ export default function BadgeForm() {
                   {/* Amount + preview */}
                   <div className="flex items-start gap-3">
                     <div className="flex-1">
-                      <label className="block text-xs text-gray-500 mb-1">Milestone amount</label>
+                      <label className="block text-xs text-[--color-dp-700] mb-1">Milestone amount</label>
                       <input
-                        className={`${input} ${tierErrors[i] ? 'border-red-600 focus:border-red-500' : ''}`}
+                        className={`input input-sm ${tierErrors[i] ? 'input-error' : ''}`}
                         type="number"
                         min="1"
                         required
@@ -526,16 +524,16 @@ export default function BadgeForm() {
                         onChange={(e) => updateTierAmount(i, Number(e.target.value))}
                       />
                       {tierErrors[i] ? (
-                        <p className="text-xs text-red-400 mt-1">{tierErrors[i]}</p>
+                        <p className="field-error">{tierErrors[i]}</p>
                       ) : i > 0 ? (
-                        <p className="text-xs text-gray-600 mt-1">prev: {tiers[i - 1].amount}</p>
+                        <p className="text-xs text-[--color-dp-600] mt-1">prev: {tiers[i - 1].amount}</p>
                       ) : null}
                     </div>
 
                     {/* Preview: uses shared centerpieceUrl with this tier's level */}
                     {centerpieceUrl && (
                       <div className="shrink-0">
-                        <label className="block text-xs text-gray-500 mb-1">Preview</label>
+                        <label className="block text-xs text-[--color-dp-700] mb-1">Preview</label>
                         <BadgePreview
                           centerpieceUrl={centerpieceUrl}
                           badgeType="tiered"
@@ -551,7 +549,7 @@ export default function BadgeForm() {
             })}
 
             {!centerpieceUrl && (
-              <p className="text-xs text-gray-600">Select a centerpiece above to preview each stage.</p>
+              <p className="text-xs text-[--color-dp-600]">Select a centerpiece above to preview each stage.</p>
             )}
           </div>
         )}
@@ -559,29 +557,29 @@ export default function BadgeForm() {
         {/* ── Collection: badge picker ─────────────────────────────────────────── */}
         {selectedType === 'collection' && (
           <div className="space-y-2">
-            <span className="text-sm text-gray-400">Required badges</span>
+            <span className="label">Required badges</span>
             {availableBadges.length === 0 ? (
-              <p className="text-xs text-gray-500">No other badges in this organisation yet.</p>
+              <p className="text-xs text-[--color-dp-700]">No other badges in this organisation yet.</p>
             ) : (
-              <div className="bg-gray-900 border border-gray-700 rounded-lg divide-y divide-gray-800 max-h-56 overflow-y-auto">
+              <div className="bg-white border border-[--color-border] rounded-lg divide-y divide-[--color-dp-200] max-h-56 overflow-y-auto">
                 {availableBadges.map((b) => (
-                  <label key={b.id} className="flex items-center gap-3 px-3 py-2.5 cursor-pointer hover:bg-gray-800 transition-colors">
+                  <label key={b.id} className="flex items-center gap-3 px-3 py-2.5 cursor-pointer hover:bg-[--color-dp-25] transition-colors">
                     <input
                       type="checkbox"
                       checked={requiredBadgeIds.includes(b.id)}
                       onChange={() => toggleBadge(b.id)}
-                      className="w-4 h-4 accent-blue-500 shrink-0"
+                      className="checkbox shrink-0"
                     />
                     {b.imageURL && (
                       <img src={b.imageURL} alt="" className="w-6 h-6 rounded object-cover shrink-0" />
                     )}
-                    <span className="text-sm text-gray-200 truncate">{b.name}</span>
+                    <span className="text-sm text-[--color-dp-1400] truncate">{b.name}</span>
                   </label>
                 ))}
               </div>
             )}
             {requiredBadgeIds.length > 0 && (
-              <p className="text-xs text-gray-500">{requiredBadgeIds.length} badge{requiredBadgeIds.length !== 1 ? 's' : ''} selected</p>
+              <p className="text-xs text-[--color-dp-700]">{requiredBadgeIds.length} badge{requiredBadgeIds.length !== 1 ? 's' : ''} selected</p>
             )}
           </div>
         )}
@@ -591,23 +589,23 @@ export default function BadgeForm() {
             type="checkbox"
             checked={form.visible_for_users}
             onChange={(e) => field('visible_for_users', e.target.checked)}
-            className="w-4 h-4 accent-blue-500"
+            className="checkbox"
           />
-          <span className="text-sm text-gray-300">Visible to users</span>
+          <span className="text-sm text-[--color-dp-1200]">Visible to users</span>
         </label>
 
         <div className="flex gap-3 pt-2">
           <button
             type="submit"
             disabled={submitDisabled}
-            className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-medium px-5 py-2.5 rounded-lg transition-colors"
+            className="btn btn-primary btn-rounded"
           >
             {saving ? 'Saving…' : isEdit ? 'Save changes' : 'Create badge'}
           </button>
           <button
             type="button"
             onClick={() => navigate(`/orgs/${orgId}`)}
-            className="bg-gray-800 hover:bg-gray-700 text-gray-300 px-5 py-2.5 rounded-lg transition-colors"
+            className="btn btn-secondary btn-rounded"
           >
             Cancel
           </button>
@@ -619,13 +617,11 @@ export default function BadgeForm() {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-const input = 'w-full bg-gray-900 border border-gray-700 focus:border-blue-500 focus:outline-none text-gray-100 text-sm px-3 py-2 rounded-lg';
-
 function Field({ label, children, required }: { label: string; children: React.ReactNode; required?: boolean }) {
   return (
     <div>
-      <label className="block text-sm text-gray-400 mb-1.5">
-        {label}{required && <span className="text-red-400 ml-1">*</span>}
+      <label className="label">
+        {label}{required && <span className="text-[--color-ferocious-800] ml-1">*</span>}
       </label>
       {children}
     </div>

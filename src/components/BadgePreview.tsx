@@ -18,7 +18,7 @@ interface Props {
 function bgUrl(centerpieceUrl: string, badgeType: Props['badgeType'], tierLevel: number): string {
   // Derive the storage origin from the centerpiece URL (works in any env)
   const storageBase = centerpieceUrl.replace(/\/storage\/v1\/.*$/, '');
-  const bgName = badgeType === 'tiered' ? `tier-${Math.min(tierLevel, 3)}` : 'normal';
+  const bgName = badgeType === 'tiered' ? `tier-${Math.min(Math.ceil(tierLevel / 4), 3)}` : 'normal';
   return `${storageBase}/storage/v1/object/public/badges/_backgrounds/${bgName}.png`;
 }
 

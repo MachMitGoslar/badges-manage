@@ -8,27 +8,29 @@ function OrgCard({ org, isMyOrg }: { org: Organisation; isMyOrg: boolean }) {
   return (
     <Link
       to={`/orgs/${org.id}`}
-      className="bg-gray-900 border border-gray-800 hover:border-gray-600 rounded-lg px-5 py-4 flex items-center justify-between transition-colors group"
+      className="card px-5 py-4 flex items-center justify-between group"
     >
       <div className="flex items-center gap-4">
         {org.logoFileUrl ? (
-          <img src={org.logoFileUrl} alt="" className="w-10 h-10 rounded object-cover bg-gray-800" />
+          <img src={org.logoFileUrl} alt="" className="w-10 h-10 rounded object-cover bg-[--color-dp-200] shrink-0" />
         ) : (
-          <div className="w-10 h-10 rounded bg-gray-800 flex items-center justify-center text-gray-600 text-lg font-bold">
+          <div className="w-10 h-10 rounded bg-[--color-dp-200] flex items-center justify-center text-[--color-dp-700] text-lg font-bold shrink-0">
             {(org.name ?? '?')[0]}
           </div>
         )}
         <div>
           <div className="flex items-center gap-2">
-            <p className="font-medium text-white">{org.name ?? <span className="text-gray-500 italic">Unnamed</span>}</p>
+            <p className="font-medium text-[--color-dp-1400]">
+              {org.name ?? <span className="text-[--color-dp-600] italic">Unnamed</span>}
+            </p>
             {isMyOrg && (
-              <span className="text-xs bg-blue-900 text-blue-300 px-1.5 py-0.5 rounded font-medium">your org</span>
+              <span className="badge badge-primary">your org</span>
             )}
           </div>
-          {org.city && <p className="text-xs text-gray-500">{org.city}</p>}
+          {org.city && <p className="text-xs text-[--color-dp-700]">{org.city}</p>}
         </div>
       </div>
-      <span className="text-gray-600 group-hover:text-gray-400 text-sm">→</span>
+      <span className="text-[--color-dp-400] group-hover:text-[--color-dp-800] text-sm transition-colors">→</span>
     </Link>
   );
 }
@@ -47,16 +49,16 @@ export default function Dashboard() {
 
   return (
     <Layout>
-      <h1 className="text-2xl font-bold text-white mb-6">Organisations</h1>
+      <h1 className="text-2xl font-bold text-[--color-dp-1400] mb-6">Organisations</h1>
 
-      {isLoading && <p className="text-gray-400">Loading…</p>}
-      {error && <p className="text-red-400">Failed to load organisations.</p>}
+      {isLoading && <p className="text-[--color-dp-700]">Loading…</p>}
+      {error && <p className="text-[--color-ferocious-800]">Failed to load organisations.</p>}
 
       {data && (
         <div className="space-y-8">
           {myOrgs.length > 0 && (
             <section>
-              <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">My Organisations</h2>
+              <h2 className="text-sm font-semibold text-[--color-dp-800] uppercase tracking-wider mb-3">My Organisations</h2>
               <div className="grid gap-3">
                 {myOrgs.map((org) => <OrgCard key={org.id} org={org} isMyOrg />)}
               </div>
@@ -66,7 +68,7 @@ export default function Dashboard() {
           {otherOrgs.length > 0 && (
             <section>
               {myOrgs.length > 0 && (
-                <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Other Organisations</h2>
+                <h2 className="text-sm font-semibold text-[--color-dp-800] uppercase tracking-wider mb-3">Other Organisations</h2>
               )}
               <div className="grid gap-3">
                 {otherOrgs.map((org) => <OrgCard key={org.id} org={org} isMyOrg={false} />)}
@@ -75,7 +77,7 @@ export default function Dashboard() {
           )}
 
           {data.organisations.length === 0 && (
-            <p className="text-gray-500">No organisations found.</p>
+            <p className="text-[--color-dp-700]">No organisations found.</p>
           )}
         </div>
       )}

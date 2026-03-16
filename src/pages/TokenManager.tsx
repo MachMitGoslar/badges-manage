@@ -3,12 +3,51 @@ import { useParams, Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { QRCodeSVG } from 'qrcode.react';
 import { useAuth } from '../auth/AuthContext.tsx';
-import { api, ApiError, type BadgeTemplate, type GrantToken, type CreateTokenInput } from '../api/client.ts';
+import { api, ApiError, type BadgeTemplate, type GrantToken, type GrantLogEntry, type CreateTokenInput } from '../api/client.ts';
 import Layout from '../components/Layout.tsx';
 
 function formatExpiry(expiresAt: string | null): string {
   if (!expiresAt) return '∞';
   return new Date(expiresAt).toLocaleDateString();
+}
+
+const STATUS_STYLES: Record<GrantLogEntry['status'], string> = {
+  success:         'text-[--color-success-600]',
+  failed:          'text-[--color-ferocious-800]',
+  already_earned:  'text-[--color-mango-900]',
+  token_expired:   'text-orange-600',
+  token_exhausted: 'text-orange-600',
+};
+
+function RedemptionLog({ orgId, tokenId, authToken }: { orgId: string; tokenId: string; authToken: string | null }) {
+  const { data, isLoading } = useQuery({
+    queryKey: ['token-redemptions', tokenId],
+    queryFn: () => api.get<{ redemptions: GrantLogEntry[] }>(
+      `/api/v1/orgs/${orgId}/grant-tokens/${tokenId}/redemptions`,
+      authToken,
+    ),
+  });
+
+  if (isLoading) return <p className="text-xs text-[--color-dp-600] py-2">Loading…</p>;
+
+  const entries = data?.redemptions ?? [];
+  if (entries.length === 0) return <p className="text-xs text-[--color-dp-700] py-2">No redemptions yet.</p>;
+
+  return (
+    <div className="mt-3 border-t border-[--color-border] pt-3 space-y-1.5">
+      {entries.map((e) => (
+        <div key={e.id} className="flex items-center justify-between gap-3 text-xs">
+          <span className="font-mono text-[--color-dp-600] truncate max-w-[160px]" title={e.user_id}>
+            {e.user_id.slice(0, 8)}…
+          </span>
+          <span className={`shrink-0 ${STATUS_STYLES[e.status]}`}>{e.status.replace(/_/g, ' ')}</span>
+          <span className="text-[--color-dp-400] shrink-0">
+            {new Date(e.granted_at).toLocaleString()}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 function isExhausted(t: GrantToken): boolean {
@@ -23,7 +62,7 @@ export default function TokenManager() {
   if (!isMember(orgId ?? '')) {
     return (
       <Layout back={{ to: `/orgs/${orgId}`, label: 'Organisation' }} title="Grant Tokens">
-        <p className="text-gray-400">You are not a member of this organisation.</p>
+        <p className="text-[--color-dp-700]">You are not a member of this organisation.</p>
       </Layout>
     );
   }
@@ -45,6 +84,7 @@ export default function TokenManager() {
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState('');
   const [qrToken, setQrToken] = useState<GrantToken | null>(null);
+  const [expandedTokenId, setExpandedTokenId] = useState<string | null>(null);
 
   const grantUrl = (t: GrantToken) => t.grant_url ?? `${window.location.origin}/grant/${t.token}`;
 
@@ -80,17 +120,17 @@ export default function TokenManager() {
 
   return (
     <Layout back={{ to: `/orgs/${orgId}`, label: 'Organisation' }} title="Grant Tokens">
-      <h1 className="text-2xl font-bold text-white mb-6">Grant Tokens</h1>
+      <h1 className="text-2xl font-bold text-[--color-dp-1400] mb-6">Grant Tokens</h1>
 
       {/* Create form */}
-      <div className="bg-gray-900 border border-gray-800 rounded-xl p-5 mb-8">
-        <h2 className="font-semibold text-white mb-4">Create new token</h2>
+      <div className="card p-5 mb-8">
+        <h2 className="font-semibold text-[--color-dp-1400] mb-4">Create new token</h2>
         <form onSubmit={handleCreate} className="space-y-3">
           <div className="flex flex-wrap gap-3">
             <div className="flex-1 min-w-48">
-              <label className="block text-xs text-gray-400 mb-1">Badge</label>
+              <label className="block text-xs text-[--color-dp-700] mb-1">Badge</label>
               <select
-                className="w-full bg-gray-800 border border-gray-700 text-gray-100 text-sm px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500"
+                className="input input-sm"
                 value={selectedBadgeId}
                 onChange={(e) => setSelectedBadgeId(e.target.value)}
                 required
@@ -102,9 +142,9 @@ export default function TokenManager() {
               </select>
             </div>
             <div className="flex-1 min-w-48">
-              <label className="block text-xs text-gray-400 mb-1">Note (optional)</label>
+              <label className="block text-xs text-[--color-dp-700] mb-1">Note (optional)</label>
               <input
-                className="w-full bg-gray-800 border border-gray-700 text-gray-100 text-sm px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500"
+                className="input input-sm"
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 placeholder="e.g. Event 2024-06"
@@ -113,9 +153,9 @@ export default function TokenManager() {
           </div>
           <div className="flex flex-wrap gap-3 items-end">
             <div className="w-36">
-              <label className="block text-xs text-gray-400 mb-1">Max uses</label>
+              <label className="block text-xs text-[--color-dp-700] mb-1">Max uses</label>
               <input
-                className="w-full bg-gray-800 border border-gray-700 text-gray-100 text-sm px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500"
+                className="input input-sm"
                 type="number"
                 min="1"
                 value={maxUses}
@@ -124,9 +164,9 @@ export default function TokenManager() {
               />
             </div>
             <div className="flex-1 min-w-48">
-              <label className="block text-xs text-gray-400 mb-1">Redeemable until (optional)</label>
+              <label className="block text-xs text-[--color-dp-700] mb-1">Redeemable until (optional)</label>
               <input
-                className="w-full bg-gray-800 border border-gray-700 text-gray-100 text-sm px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500"
+                className="input input-sm"
                 type="datetime-local"
                 value={expiresAt}
                 onChange={(e) => setExpiresAt(e.target.value)}
@@ -135,28 +175,28 @@ export default function TokenManager() {
             <button
               type="submit"
               disabled={creating || !selectedBadgeId}
-              className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-medium text-sm px-4 py-2 rounded-lg transition-colors"
+              className="btn btn-primary btn-rounded"
             >
               {creating ? 'Creating…' : 'Create'}
             </button>
           </div>
         </form>
-        {createError && <p className="text-red-400 text-sm mt-2">{createError}</p>}
+        {createError && <p className="text-[--color-ferocious-800] text-sm mt-2">{createError}</p>}
       </div>
 
       {/* QR modal */}
       {qrToken && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-900 border border-gray-700 rounded-xl p-6 max-w-sm w-full text-center">
-            <h3 className="font-semibold text-white mb-1">Token created</h3>
-            <p className="text-xs text-gray-400 mb-4 break-all">{grantUrl(qrToken)}</p>
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-white border border-[--color-border] rounded-xl p-6 max-w-sm w-full text-center shadow-xl">
+            <h3 className="font-semibold text-[--color-dp-1400] mb-1">Token created</h3>
+            <p className="text-xs text-[--color-dp-700] mb-4 break-all">{grantUrl(qrToken)}</p>
             <div className="flex justify-center mb-4">
-              <QRCodeSVG value={grantUrl(qrToken)} size={200} bgColor="#111827" fgColor="#f9fafb" />
+              <QRCodeSVG value={grantUrl(qrToken)} size={200} bgColor="#ffffff" fgColor="#222222" />
             </div>
-            <p className="text-xs font-mono text-gray-400 break-all mb-4">{qrToken.token}</p>
+            <p className="text-xs font-mono text-[--color-dp-700] break-all mb-4">{qrToken.token}</p>
             <button
               onClick={() => setQrToken(null)}
-              className="w-full bg-gray-700 hover:bg-gray-600 text-white text-sm px-4 py-2.5 rounded-lg transition-colors"
+              className="btn btn-secondary btn-rounded w-full"
             >
               Close
             </button>
@@ -165,43 +205,75 @@ export default function TokenManager() {
       )}
 
       {/* Token list */}
-      {isLoading && <p className="text-gray-400">Loading tokens…</p>}
+      {isLoading && <p className="text-[--color-dp-700]">Loading tokens…</p>}
 
       {tokensData && (
         <div className="space-y-2">
-          {tokens.length === 0 && <p className="text-gray-500">No tokens yet.</p>}
+          {tokens.length === 0 && <p className="text-[--color-dp-700]">No tokens yet.</p>}
           {tokens.map((t) => {
             const badge = badges.find((b) => b.id === t.badge_template_id);
             const exhausted = isExhausted(t);
             const note = t.metadata?.note as string | undefined;
+            const expanded = expandedTokenId === t.id;
+            const usePct = t.max_uses ? Math.min(100, (t.current_uses / t.max_uses) * 100) : null;
+
             return (
               <div
                 key={t.id}
-                className={`bg-gray-900 border rounded-lg px-5 py-3 flex items-center gap-4 ${exhausted ? 'border-gray-800 opacity-60' : 'border-gray-700'}`}
+                className={`card px-5 py-3 ${exhausted ? 'opacity-60' : ''}`}
               >
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-white font-mono truncate">{t.token}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    {badge?.name ?? t.badge_template_id}
-                    {note && <> · {note}</>}
-                  </p>
-                  <p className="text-xs text-gray-600 mt-0.5">
-                    Uses: {t.current_uses}/{t.max_uses ?? '∞'}
-                    {t.expires_at && <> · Expires: {formatExpiry(t.expires_at)}</>}
-                  </p>
-                </div>
-                <div className="text-right shrink-0">
-                  {exhausted ? (
-                    <span className="text-xs text-gray-500">{!t.is_active ? 'Deactivated' : 'Exhausted'}</span>
-                  ) : (
+                {/* Main row */}
+                <div className="flex items-center gap-4">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-[--color-dp-1200] font-mono truncate">{t.token}</p>
+                    <p className="text-xs text-[--color-dp-700] mt-0.5">
+                      {badge?.name ?? t.badge_template_id}
+                      {note && <> · {note}</>}
+                    </p>
+
+                    {/* Uses progress */}
+                    <div className="flex items-center gap-2 mt-1.5">
+                      {usePct !== null && (
+                        <div className="w-24 h-1 bg-[--color-dp-200] rounded-full overflow-hidden shrink-0">
+                          <div
+                            className={`h-full rounded-full ${usePct >= 100 ? 'bg-[--color-ferocious-800]' : 'bg-[--color-info-1000]'}`}
+                            style={{ width: `${usePct}%` }}
+                          />
+                        </div>
+                      )}
+                      <span className="text-xs text-[--color-dp-600]">
+                        {t.current_uses}/{t.max_uses ?? '∞'} uses
+                        {t.expires_at && <> · expires {formatExpiry(t.expires_at)}</>}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    {!exhausted && (
+                      <button
+                        onClick={() => setQrToken(t)}
+                        className="btn btn-sm btn-secondary btn-rounded"
+                      >
+                        Show QR
+                      </button>
+                    )}
+                    {exhausted && (
+                      <span className="text-xs text-[--color-dp-600]">{!t.is_active ? 'Deactivated' : 'Exhausted'}</span>
+                    )}
                     <button
-                      onClick={() => setQrToken(t)}
-                      className="text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 px-2.5 py-1 rounded transition-colors"
+                      onClick={() => setExpandedTokenId(expanded ? null : t.id)}
+                      className="text-xs text-[--color-dp-600] hover:text-[--color-dp-1200] transition-colors px-1"
+                      title={expanded ? 'Hide redemptions' : 'Show redemptions'}
                     >
-                      Show QR
+                      {expanded ? '▲' : '▼'}
                     </button>
-                  )}
+                  </div>
                 </div>
+
+                {/* Redemption log */}
+                {expanded && (
+                  <RedemptionLog orgId={orgId!} tokenId={t.id} authToken={token} />
+                )}
               </div>
             );
           })}
@@ -209,7 +281,7 @@ export default function TokenManager() {
       )}
 
       <div className="mt-6">
-        <Link to={`/orgs/${orgId}`} className="text-sm text-gray-500 hover:text-gray-300 transition-colors">
+        <Link to={`/orgs/${orgId}`} className="nav-link text-sm">
           ← Back to organisation
         </Link>
       </div>

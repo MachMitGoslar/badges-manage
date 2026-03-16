@@ -35,49 +35,49 @@ export default function DebugScreen() {
 
   return (
     <Layout title="Debug">
-      <h1 className="text-2xl font-bold text-white mb-6">Auth Debug</h1>
+      <h1 className="text-2xl font-bold text-[--color-dp-1400] mb-6">Auth Debug</h1>
 
       <div className="space-y-6">
         {/* Token summary */}
-        <section className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-          <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Session</h2>
+        <section className="card p-5">
+          <h2 className="text-sm font-semibold text-[--color-dp-800] uppercase tracking-wider mb-3">Session</h2>
           {token ? (
             <div className="space-y-2 text-sm">
               <div className="flex gap-3">
-                <span className="text-gray-500 w-24 shrink-0">Status</span>
-                <span className="text-green-400 font-medium">authenticated</span>
+                <span className="text-[--color-dp-700] w-24 shrink-0">Status</span>
+                <span className="text-[--color-success-600] font-medium">authenticated</span>
               </div>
               <div className="flex gap-3">
-                <span className="text-gray-500 w-24 shrink-0">Subject</span>
-                <span className="text-gray-200 font-mono">{String(payload?.sub ?? '—')}</span>
+                <span className="text-[--color-dp-700] w-24 shrink-0">Subject</span>
+                <span className="text-[--color-dp-1200] font-mono">{String(payload?.sub ?? '—')}</span>
               </div>
               <div className="flex gap-3">
-                <span className="text-gray-500 w-24 shrink-0">Email</span>
-                <span className="text-gray-200">{String(payload?.['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'] ?? payload?.email ?? '—')}</span>
+                <span className="text-[--color-dp-700] w-24 shrink-0">Email</span>
+                <span className="text-[--color-dp-1200]">{String(payload?.['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'] ?? payload?.email ?? '—')}</span>
               </div>
               <div className="flex gap-3">
-                <span className="text-gray-500 w-24 shrink-0">Expires</span>
-                <span className={`font-medium ${formatExpiry(payload?.exp) === 'expired' ? 'text-red-400' : 'text-yellow-300'}`}>
+                <span className="text-[--color-dp-700] w-24 shrink-0">Expires</span>
+                <span className={`font-medium ${formatExpiry(payload?.exp) === 'expired' ? 'text-[--color-ferocious-800]' : 'text-[--color-mango-900]'}`}>
                   {formatExpiry(payload?.exp)}
                 </span>
               </div>
             </div>
           ) : (
-            <p className="text-gray-500 text-sm">No token — not authenticated.</p>
+            <p className="text-[--color-dp-700] text-sm">No token — not authenticated.</p>
           )}
         </section>
 
         {/* Org memberships */}
-        <section className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-          <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">
+        <section className="card p-5">
+          <h2 className="text-sm font-semibold text-[--color-dp-800] uppercase tracking-wider mb-3">
             Org Memberships ({orgIds.length})
           </h2>
           {orgIds.length === 0 ? (
-            <p className="text-gray-500 text-sm">No org memberships found.</p>
+            <p className="text-[--color-dp-700] text-sm">No org memberships found.</p>
           ) : (
             <ul className="space-y-1">
               {orgIds.map((id) => (
-                <li key={id} className="text-sm font-mono text-gray-300">{id}</li>
+                <li key={id} className="text-sm font-mono text-[--color-dp-1200]">{id}</li>
               ))}
             </ul>
           )}
@@ -85,9 +85,9 @@ export default function DebugScreen() {
 
         {/* Raw JWT payload */}
         {payload && (
-          <section className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-            <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Raw JWT Payload</h2>
-            <pre className="text-xs text-gray-400 overflow-x-auto whitespace-pre-wrap break-all">
+          <section className="card p-5">
+            <h2 className="text-sm font-semibold text-[--color-dp-800] uppercase tracking-wider mb-3">Raw JWT Payload</h2>
+            <pre className="text-xs text-[--color-dp-700] overflow-x-auto whitespace-pre-wrap break-all">
               {JSON.stringify(payload, null, 2)}
             </pre>
           </section>
@@ -95,9 +95,9 @@ export default function DebugScreen() {
 
         {/* Raw token */}
         {token && (
-          <section className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-            <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Raw Access Token</h2>
-            <p className="text-xs font-mono text-gray-500 break-all">{token}</p>
+          <section className="card p-5">
+            <h2 className="text-sm font-semibold text-[--color-dp-800] uppercase tracking-wider mb-3">Raw Access Token</h2>
+            <p className="text-xs font-mono text-[--color-dp-600] break-all">{token}</p>
           </section>
         )}
 
@@ -105,7 +105,7 @@ export default function DebugScreen() {
         <div className="flex gap-3">
           <button
             onClick={handleLogout}
-            className="bg-red-950 hover:bg-red-900 text-red-400 text-sm px-4 py-2 rounded-lg transition-colors"
+            className="btn btn-destructive btn-rounded"
           >
             Clear session
           </button>

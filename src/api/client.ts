@@ -70,7 +70,7 @@ export interface BadgeTemplate {
   centerpiece_url: string | null;
   organisation: { id: string; name: string | null } | null;
   // type-specific (present when badge_type matches)
-  tiers?: { level: number; amount: number; imageURL: string | null }[];
+  tiers?: { level: number; amount: number; imageURL: string | null; name: string | null; text_awarded: string | null }[];
   collection_badges?: { id: string; text_condition: string; imageURL: string | null }[];
 }
 
@@ -100,7 +100,7 @@ export interface CreateBadgeInput {
   badge_type?: 'normal' | 'tiered' | 'collection';
   centerpiece_url?: string;
   // type-specific
-  tiers?: { level: number; amount: number; imageURL?: string }[];
+  tiers?: { level: number; amount: number; imageURL?: string; name?: string | null; text_awarded?: string | null }[];
   required_badge_ids?: string[];
 }
 

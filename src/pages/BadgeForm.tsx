@@ -8,7 +8,7 @@ import CenterpieceSelector from '../components/CenterpieceSelector.tsx';
 import BadgePreview from '../components/BadgePreview.tsx';
 
 type BadgeType = 'normal' | 'tiered' | 'collection';
-type TierRow = { amount: number; imageURL: string };
+type TierRow = { amount: number; imageURL: string; name: string; text_awarded: string };
 type Step = 'pick-type' | 'fill';
 
 // ── Icon renderers (accept a className so size is controlled at the call site) ─
@@ -109,7 +109,7 @@ export default function BadgeForm() {
   });
   const [centerpieceUrl, setCenterpieceUrl] = useState<string | null>(null);
   const [categoryInput, setCategoryInput] = useState('');
-  const [tiers, setTiers] = useState<TierRow[]>([{ amount: 5, imageURL: '' }]);
+  const [tiers, setTiers] = useState<TierRow[]>([{ amount: 5, imageURL: '', name: '', text_awarded: '' }]);
   const [requiredBadgeIds, setRequiredBadgeIds] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -130,7 +130,12 @@ export default function BadgeForm() {
     setCategoryInput(b.category.join(', '));
     setCenterpieceUrl(b.centerpiece_url ?? null);
     if (b.badge_type === 'tiered' && b.tiers?.length) {
-      setTiers(b.tiers.map((t) => ({ amount: t.amount, imageURL: t.imageURL ?? '' })));
+      setTiers(b.tiers.map((t) => ({
+        amount: t.amount,
+        imageURL: t.imageURL ?? '',
+        name: t.name ?? '',
+        text_awarded: t.text_awarded ?? '',
+      })));
     }
     if (b.badge_type === 'collection' && b.collection_badges?.length) {
       setRequiredBadgeIds(b.collection_badges.map((cb) => cb.id));
@@ -143,7 +148,7 @@ export default function BadgeForm() {
 
   function selectType(type: BadgeType) {
     field('badge_type', type);
-    setTiers([{ amount: 5, imageURL: '' }]);
+    setTiers([{ amount: 5, imageURL: '', name: '', text_awarded: '' }]);
     setRequiredBadgeIds([]);
     setStep('fill');
   }
@@ -153,7 +158,7 @@ export default function BadgeForm() {
   function addTier() {
     setTiers((prev) => {
       const last = prev[prev.length - 1].amount;
-      return [...prev, { amount: last + 1, imageURL: '' }];
+      return [...prev, { amount: last + 1, imageURL: '', name: '', text_awarded: '' }];
     });
   }
 
@@ -163,6 +168,10 @@ export default function BadgeForm() {
 
   function updateTierAmount(i: number, value: number) {
     setTiers((prev) => prev.map((t, idx) => (idx === i ? { ...t, amount: value } : t)));
+  }
+
+  function updateTierField(i: number, key: 'name' | 'text_awarded', value: string) {
+    setTiers((prev) => prev.map((t, idx) => (idx === i ? { ...t, [key]: value } : t)));
   }
 
   // Per-tier validation: each amount must be strictly greater than the previous
@@ -200,7 +209,16 @@ export default function BadgeForm() {
     };
 
     const payload: CreateBadgeInput = form.badge_type === 'tiered'
-      ? { ...base, tiers: tiers.map((t, i) => ({ level: i + 1, amount: t.amount, imageURL: t.imageURL || undefined })) }
+      ? {
+          ...base,
+          tiers: tiers.map((t, i) => ({
+            level: i + 1,
+            amount: t.amount,
+            imageURL: t.imageURL || undefined,
+            name: t.name || null,
+            text_awarded: t.text_awarded || null,
+          })),
+        }
       : form.badge_type === 'collection'
       ? { ...base, required_badge_ids: requiredBadgeIds }
       : base;
@@ -405,6 +423,28 @@ export default function BadgeForm() {
                         Remove
                       </button>
                     )}
+                  </div>
+
+                  {/* Stage name + awarded text */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">Stage name</label>
+                      <input
+                        className={input}
+                        value={tier.name}
+                        onChange={(e) => updateTierField(i, 'name', e.target.value)}
+                        placeholder={`e.g. ${stageName} Champion`}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">Awarded text</label>
+                      <input
+                        className={input}
+                        value={tier.text_awarded}
+                        onChange={(e) => updateTierField(i, 'text_awarded', e.target.value)}
+                        placeholder="Shown when this tier is reached"
+                      />
+                    </div>
                   </div>
 
                   {/* Amount + preview */}

@@ -68,6 +68,8 @@ export interface BadgeTemplate {
   visible_for_users: boolean;
   badge_type: 'normal' | 'tiered' | 'collection';
   centerpiece_url: string | null;
+  frame_tier: number | null;
+  frame_level: number | null;
   organisation: { id: string; name: string | null } | null;
   // type-specific (present when badge_type matches)
   tiers?: { level: number; amount: number; imageURL: string | null; name: string | null; text_awarded: string | null }[];
@@ -99,6 +101,8 @@ export interface CreateBadgeInput {
   visible_for_users?: boolean;
   badge_type?: 'normal' | 'tiered' | 'collection';
   centerpiece_url?: string;
+  frame_tier?: number | null;
+  frame_level?: number | null;
   // type-specific
   tiers?: { level: number; amount: number; imageURL?: string; name?: string | null; text_awarded?: string | null }[];
   required_badge_ids?: string[];

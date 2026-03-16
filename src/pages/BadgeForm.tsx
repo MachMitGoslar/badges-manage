@@ -108,6 +108,8 @@ export default function BadgeForm() {
     badge_type: 'normal',
   });
   const [centerpieceUrl, setCenterpieceUrl] = useState<string | null>(null);
+  const [frameTier, setFrameTier] = useState<number | null>(null);
+  const [frameLevel, setFrameLevel] = useState<number | null>(null);
   const [categoryInput, setCategoryInput] = useState('');
   const [tiers, setTiers] = useState<TierRow[]>([{ amount: 5, imageURL: '', name: '', text_awarded: '' }]);
   const [requiredBadgeIds, setRequiredBadgeIds] = useState<string[]>([]);
@@ -129,6 +131,8 @@ export default function BadgeForm() {
     });
     setCategoryInput(b.category.join(', '));
     setCenterpieceUrl(b.centerpiece_url ?? null);
+    setFrameTier(b.frame_tier ?? null);
+    setFrameLevel(b.frame_level ?? null);
     if (b.badge_type === 'tiered' && b.tiers?.length) {
       setTiers(b.tiers.map((t) => ({
         amount: t.amount,
@@ -150,6 +154,8 @@ export default function BadgeForm() {
     field('badge_type', type);
     setTiers([{ amount: 5, imageURL: '', name: '', text_awarded: '' }]);
     setRequiredBadgeIds([]);
+    setFrameTier(null);
+    setFrameLevel(null);
     setStep('fill');
   }
 
@@ -205,6 +211,8 @@ export default function BadgeForm() {
       ...form,
       imageURL: form.imageURL || undefined,
       centerpiece_url: centerpieceUrl ?? undefined,
+      frame_tier: frameTier ?? null,
+      frame_level: frameLevel ?? null,
       category: categoryInput.split(',').map((s) => s.trim()).filter(Boolean),
     };
 
@@ -363,6 +371,64 @@ export default function BadgeForm() {
             )}
           </div>
         </div>
+
+        {/* ── Frame picker — normal & collection badges ──────────────────────── */}
+        {(selectedType === 'normal' || selectedType === 'collection') && (
+          <div>
+            <label className="block text-sm text-gray-400 mb-2">Badge frame</label>
+            <div className="space-y-3">
+              {/* Plain / no frame */}
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => { setFrameTier(null); setFrameLevel(null); }}
+                  className={`flex flex-col items-center gap-1 p-1.5 rounded-lg border transition-colors ${frameTier === null ? 'border-blue-500 bg-blue-950' : 'border-gray-700 hover:border-gray-500'}`}
+                >
+                  {centerpieceUrl ? (
+                    <BadgePreview centerpieceUrl={centerpieceUrl} badgeType="normal" className="w-12 h-12" />
+                  ) : (
+                    <div className="w-12 h-12 rounded-lg bg-gray-800 border border-gray-700 flex items-center justify-center text-gray-600 text-xs">—</div>
+                  )}
+                  <span className="text-[10px] text-gray-400">Plain</span>
+                </button>
+              </div>
+
+              {/* 3 stages × 4 levels */}
+              {STAGE_NAMES.map((stageName, stageIdx) => (
+                <div key={stageIdx}>
+                  <p className={`text-xs font-medium mb-1.5 ${STAGE_COLORS[stageIdx]}`}>{stageName} Stage</p>
+                  <div className="flex flex-wrap gap-2">
+                    {[1, 2, 3, 4].map((lvl) => {
+                      const tier = stageIdx + 1;
+                      const tierLevel = stageIdx * 4 + lvl;
+                      const selected = frameTier === tier && frameLevel === lvl;
+                      return (
+                        <button
+                          key={lvl}
+                          type="button"
+                          onClick={() => { setFrameTier(tier); setFrameLevel(lvl); }}
+                          className={`flex flex-col items-center gap-1 p-1.5 rounded-lg border transition-colors ${selected ? 'border-blue-500 bg-blue-950' : 'border-gray-700 hover:border-gray-500'}`}
+                        >
+                          {centerpieceUrl ? (
+                            <BadgePreview centerpieceUrl={centerpieceUrl} badgeType="tiered" tierLevel={tierLevel} className="w-12 h-12" />
+                          ) : (
+                            <div className="w-12 h-12 rounded-lg bg-gray-800 border border-gray-700" />
+                          )}
+                          <span className="text-[10px] text-gray-400">L{lvl}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+            {frameTier && (
+              <p className="text-xs text-gray-500 mt-2">
+                Selected: {STAGE_NAMES[frameTier - 1]} Stage · Level {frameLevel} — badge will be rendered on save
+              </p>
+            )}
+          </div>
+        )}
 
         <Field label="Categories (comma-separated)">
           <input

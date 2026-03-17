@@ -114,6 +114,7 @@ export interface CreateBadgeInput {
 export interface GrantLogEntry {
   id: string;
   user_id: string;
+  user_name: string | null;
   granted_at: string;
   status: 'success' | 'failed' | 'already_earned' | 'token_expired' | 'token_exhausted';
   error_message: string | null;

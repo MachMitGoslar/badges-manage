@@ -19,7 +19,14 @@ const STATUS_STYLES: Record<GrantLogEntry['status'], string> = {
   token_exhausted: 'text-orange-600',
 };
 
-function RedemptionLog({ orgId, tokenId, authToken }: { orgId: string; tokenId: string; authToken: string | null }) {
+function RedemptionLog({
+  orgId, tokenId, authToken, badgeImageUrl,
+}: {
+  orgId: string;
+  tokenId: string;
+  authToken: string | null;
+  badgeImageUrl: string | null;
+}) {
   const { data, isLoading } = useQuery({
     queryKey: ['token-redemptions', tokenId],
     queryFn: () => api.get<{ redemptions: GrantLogEntry[] }>(
@@ -35,10 +42,18 @@ function RedemptionLog({ orgId, tokenId, authToken }: { orgId: string; tokenId: 
 
   return (
     <div className="mt-3 border-t border-[--color-border] pt-3 space-y-1.5">
+      {badgeImageUrl && (
+        <div className="flex items-center gap-2 mb-2">
+          <img src={badgeImageUrl} alt="Badge" className="w-8 h-8 rounded object-cover" />
+        </div>
+      )}
       {entries.map((e) => (
         <div key={e.id} className="flex items-center justify-between gap-3 text-xs">
-          <span className="font-mono text-[--color-dp-600] truncate max-w-[160px]" title={e.user_id}>
-            {e.user_id.slice(0, 8)}…
+          <span className="text-[--color-dp-800] truncate max-w-[180px]" title={e.user_id}>
+            {e.user_name
+              ? <>{e.user_name} <span className="text-[--color-dp-500] font-mono">{e.user_id.slice(0, 6)}…</span></>
+              : <span className="font-mono">{e.user_id.slice(0, 8)}…</span>
+            }
           </span>
           <span className={`shrink-0 ${STATUS_STYLES[e.status]}`}>{e.status.replace(/_/g, ' ')}</span>
           <span className="text-[--color-dp-400] shrink-0">
@@ -272,7 +287,12 @@ export default function TokenManager() {
 
                 {/* Redemption log */}
                 {expanded && (
-                  <RedemptionLog orgId={orgId!} tokenId={t.id} authToken={token} />
+                  <RedemptionLog
+                    orgId={orgId!}
+                    tokenId={t.id}
+                    authToken={token}
+                    badgeImageUrl={badge?.imageURL ?? null}
+                  />
                 )}
               </div>
             );

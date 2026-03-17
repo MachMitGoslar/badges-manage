@@ -11,25 +11,27 @@ interface Props {
   centerpieceUrl: string;
   tier: 1 | 2 | 3;
   level: 1 | 2 | 3 | 4;
+  milestone?: number;
   className?: string;
 }
 
 // Module-level cache: key → object URL (persists for session, avoids re-fetching)
 const cache = new Map<string, string>();
 
-export default function FramePreview({ centerpieceUrl, tier, level, className = 'w-12 h-12' }: Props) {
+export default function FramePreview({ centerpieceUrl, tier, level, milestone, className = 'w-12 h-12' }: Props) {
   const { token } = useAuth();
   const [src, setSrc] = useState<string | null>(null);
 
   useEffect(() => {
-    const key = `${centerpieceUrl}|${tier}|${level}`;
+    const key = `${centerpieceUrl}|${tier}|${level}|${milestone ?? ''}`;
     if (cache.has(key)) {
       setSrc(cache.get(key)!);
       return;
     }
 
     let cancelled = false;
-    const url = `/api/v1/badges/preview?centerpiece_url=${encodeURIComponent(centerpieceUrl)}&tier=${tier}&level=${level}`;
+    const msParam = milestone !== undefined ? `&milestone=${milestone}` : '';
+    const url = `/api/v1/badges/preview?centerpiece_url=${encodeURIComponent(centerpieceUrl)}&tier=${tier}&level=${level}${msParam}`;
 
     fetch(url, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
       .then((r) => (r.ok ? r.blob() : null))

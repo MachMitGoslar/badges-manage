@@ -9,7 +9,14 @@ import TokenManager from './pages/TokenManager.tsx';
 import DebugScreen from './pages/DebugScreen.tsx';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { token } = useAuth();
+  const { token, isLoading } = useAuth();
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[--color-page-bg] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-[--color-mango-600] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
   if (!token) return <Navigate to="/login" replace />;
   return <>{children}</>;
 }

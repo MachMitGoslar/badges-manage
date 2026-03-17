@@ -39,8 +39,9 @@ export default function AuthCallback() {
   }, [login, navigate]);
 
   return (
-    <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-      <p className="text-gray-400">Completing sign-in…</p>
+    <div className="min-h-screen bg-[--color-page-bg] flex items-center justify-center gap-3">
+      <div className="w-5 h-5 border-2 border-[--color-mango-600] border-t-transparent rounded-full animate-spin" />
+      <p className="text-[--color-dp-700] text-sm">Completing sign-in…</p>
     </div>
   );
 }

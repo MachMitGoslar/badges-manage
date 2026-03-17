@@ -4,6 +4,7 @@ import { startLogin as pkceStartLogin } from './pkce.ts';
 interface AuthState {
   token: string | null;
   orgIds: string[];
+  isLoading: boolean;
   isMember: (orgId: string) => boolean;
   login: (tokens: Record<string, unknown>) => void;
   logout: () => void;
@@ -17,6 +18,7 @@ const TOKEN_KEY = 'badges_manage_token';
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(() => localStorage.getItem(TOKEN_KEY));
   const [orgIds, setOrgIds] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(() => !!localStorage.getItem(TOKEN_KEY));
 
   const login = useCallback((tokens: Record<string, unknown>) => {
     console.log('Logging in with tokens:', tokens);
@@ -68,8 +70,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!token) {
       setOrgIds([]);
+      setIsLoading(false);
       return;
     }
+    setIsLoading(true);
     fetch('/api/v1/users/me/organisations', {
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -79,7 +83,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setOrgIds(data.organisations.map((o: { organisation_id: string }) => o.organisation_id));
         }
       })
-      .catch(() => setOrgIds([]));
+      .catch(() => setOrgIds([]))
+      .finally(() => setIsLoading(false));
   }, [token]);
 
   const startLogin = useCallback(() => pkceStartLogin(), []);
@@ -87,7 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isMember = useCallback((orgId: string) => orgIds.includes(orgId), [orgIds]);
 
   return (
-    <AuthContext.Provider value={{ token, orgIds, isMember, login, logout, startLogin }}>
+    <AuthContext.Provider value={{ token, orgIds, isLoading, isMember, login, logout, startLogin }}>
       {children}
     </AuthContext.Provider>
   );

@@ -8,6 +8,7 @@ import BadgeForm from './pages/BadgeForm.tsx';
 import TokenManager from './pages/TokenManager.tsx';
 import OrgMembers from './pages/OrgMembers.tsx';
 import DebugScreen from './pages/DebugScreen.tsx';
+import UserProfile from './pages/UserProfile.tsx';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { token, isLoading } = useAuth();
@@ -73,6 +74,14 @@ export default function App() {
         element={
           <ProtectedRoute>
             <TokenManager />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <UserProfile />
           </ProtectedRoute>
         }
       />

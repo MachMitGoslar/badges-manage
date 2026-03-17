@@ -36,12 +36,6 @@ export default function DebugScreen() {
     enabled: !!token,
   });
 
-  const { data: badgesData } = useQuery({
-    queryKey: ['debug-badges'],
-    queryFn: () => api.get<any>('/api/v1/users/me/badges', token),
-    enabled: !!token,
-  });
-
   function handleLogout() {
     logout();
     navigate('/login', { replace: true });
@@ -127,37 +121,6 @@ export default function DebugScreen() {
                   </div>
                 ))}
               </div>
-            )}
-          </section>
-        )}
-
-        {/* Badge list */}
-        {badgesData && (
-          <section className="card p-5">
-            <h2 className="text-sm font-semibold text-[--color-dp-800] uppercase tracking-wider mb-3">
-              Earned Badges ({badgesData.total_badges ?? 0}) · {badgesData.total_points ?? 0} pts
-            </h2>
-            {(badgesData.badges ?? []).length === 0 ? (
-              <p className="text-[--color-dp-700] text-sm">No badges earned.</p>
-            ) : (
-              <ul className="space-y-2">
-                {badgesData.badges.map((eb: any) => (
-                  <li key={eb.earned_badge_id} className="flex items-center gap-3 text-sm">
-                    {eb.badge_template?.imageURL ? (
-                      <img src={eb.badge_template.imageURL} alt="" className="w-8 h-8 rounded object-cover shrink-0" />
-                    ) : (
-                      <div className="w-8 h-8 rounded bg-[--color-dp-200] shrink-0" />
-                    )}
-                    <div className="min-w-0">
-                      <p className="text-[--color-dp-1200] font-medium truncate">{eb.badge_template?.name ?? '—'}</p>
-                      <p className="text-[--color-dp-600] text-xs">{eb.organisation?.name ?? eb.organisation?.id ?? '—'}</p>
-                    </div>
-                    {eb.badge_template?.points && (
-                      <span className="ml-auto text-xs text-[--color-mango-900] font-medium shrink-0">{eb.badge_template.points} pts</span>
-                    )}
-                  </li>
-                ))}
-              </ul>
             )}
           </section>
         )}

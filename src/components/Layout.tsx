@@ -45,6 +45,9 @@ export default function Layout({ children, title, back }: Props) {
               Debug
             </Link>
           )}
+          <Link to="/profile" className="nav-link text-xs">
+            Profile
+          </Link>
           <button
             onClick={handleLogout}
             className="text-xs text-[--color-dp-800] hover:text-[--color-mango-1200] transition-colors bg-transparent border-none cursor-pointer p-0"

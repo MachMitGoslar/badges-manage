@@ -8,6 +8,9 @@ Admin web UI for the [BadgesAPI](https://github.com/MachMitGoslar/BadgesAPI) pla
 - Badge template management (create, edit, delete)
 - Grant token generation with QR code display
 - Authentication via Goslar ID (OIDC / PKCE flow)
+- Organisation member management (view members, update roles)
+- User profile page (username, visibility settings, profile image)
+- Badge portfolio view on profile page
 
 ## Requirements
 
@@ -61,14 +64,20 @@ app/
 │   ├── auth/
 │   │   └── AuthContext.tsx  # Token storage and auth state
 │   ├── components/
-│   │   └── Layout.tsx       # Shared page layout with nav
+│   │   ├── Layout.tsx            # Shared page layout with nav
+│   │   ├── BadgePreview.tsx      # Badge image preview
+│   │   ├── FramePreview.tsx      # SVG frame tier/level picker preview
+│   │   ├── CenterpieceSelector.tsx # Centerpiece image upload + selection
+│   │   └── ErrorBoundary.tsx     # React error boundary
 │   ├── pages/
 │   │   ├── Login.tsx        # Sign-in page
 │   │   ├── AuthCallback.tsx # OIDC callback handler
 │   │   ├── Dashboard.tsx    # Organisation list
 │   │   ├── OrgDetail.tsx    # Organisation + badge list
 │   │   ├── BadgeForm.tsx    # Create / edit badge template
-│   │   └── TokenManager.tsx # Grant tokens + QR codes
+│   │   ├── TokenManager.tsx # Grant tokens + QR codes
+│   │   ├── OrgMembers.tsx   # Organisation member management
+│   │   └── UserProfile.tsx  # User profile + badge portfolio
 │   ├── App.tsx              # Route definitions
 │   └── main.tsx             # App entry point
 ├── Dockerfile

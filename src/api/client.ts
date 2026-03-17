@@ -144,6 +144,68 @@ export interface OrgMember {
   email: string | null;
 }
 
+export interface UserMe {
+  id: string;
+  email: string | null;
+  name: string | null;
+  organisations: { organisation_id: string; role: string }[];
+  profile: {
+    username: string | null;
+    show_name: boolean;
+    show_profile_image: boolean;
+    show_badge_list: boolean;
+    profile_image_url: string | null;
+    showcase: unknown[];
+  };
+}
+
+export interface UpdateProfileInput {
+  username?: string;
+  show_name?: boolean;
+  show_profile_image?: boolean;
+  show_badge_list?: boolean;
+}
+
+export interface BadgeTierView {
+  level: number;
+  name: string | null;
+  image_url: string | null;
+  amount: number;
+  earned: boolean;
+  earned_at: string | null;
+  is_current: boolean;
+  is_next: boolean;
+}
+
+export interface BadgeComponentView {
+  template_id: string;
+  name: string;
+  image_url: string | null;
+  earned: boolean;
+  earned_at: string | null;
+}
+
+export interface BadgeView {
+  id: string | null;
+  template_id: string;
+  type: 'normal' | 'tiered' | 'collection';
+  name: string;
+  description: string;
+  image_url: string | null;
+  org: { id: string; name: string | null };
+  earned: boolean;
+  earned_at: string | null;
+  points: number | null;
+  tiers: BadgeTierView[] | null;
+  components: BadgeComponentView[] | null;
+}
+
+export interface BadgePortfolio {
+  user_id: string;
+  total_points: number;
+  badges: BadgeView[];
+}
+
 export interface Centerpiece {
   name: string;
   url: string;
@@ -169,6 +231,36 @@ export async function uploadCenterpiece(orgId: string, token: string | null, fil
 
 export function deleteCenterpiece(orgId: string, token: string | null, filename: string): Promise<void> {
   return api.delete(`/api/v1/orgs/${orgId}/centerpieces/${filename}`, token);
+}
+
+export function getMe(token: string | null): Promise<UserMe> {
+  return api.get<UserMe>('/api/v1/users/me', token);
+}
+
+export function getBadges(token: string | null): Promise<BadgePortfolio> {
+  return api.get<BadgePortfolio>('/api/v1/users/me/badges', token);
+}
+
+export function updateProfile(token: string | null, input: UpdateProfileInput): Promise<{ profile: UserMe['profile'] }> {
+  return api.patch<{ profile: UserMe['profile'] }>('/api/v1/users/me/profile', token, input);
+}
+
+export async function uploadProfileImage(token: string | null, file: File): Promise<{ profile_image_url: string }> {
+  const formData = new FormData();
+  formData.append('image', file);
+  const headers: Record<string, string> = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const res = await fetch('/api/v1/users/me/profile/image', { method: 'POST', headers, body: formData });
+  if (!res.ok) {
+    let message = res.statusText;
+    try { const d = await res.json(); message = d.message ?? message; } catch { /**/ }
+    throw new ApiError(res.status, message);
+  }
+  return res.json();
+}
+
+export function deleteProfileImage(token: string | null): Promise<void> {
+  return api.delete<void>('/api/v1/users/me/profile/image', token);
 }
 
 /**

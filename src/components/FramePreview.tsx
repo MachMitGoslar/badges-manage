@@ -12,26 +12,33 @@ interface Props {
   tier: 1 | 2 | 3;
   level: 1 | 2 | 3 | 4;
   milestone?: number;
+  templateId?: string;
   className?: string;
 }
 
 // Module-level cache: key → object URL (persists for session, avoids re-fetching)
 const cache = new Map<string, string>();
 
-export default function FramePreview({ centerpieceUrl, tier, level, milestone, className = 'w-12 h-12' }: Props) {
+export default function FramePreview({ centerpieceUrl, tier, level, milestone, templateId, className = 'w-12 h-12' }: Props) {
   const { token } = useAuth();
   const [src, setSrc] = useState<string | null>(null);
 
   useEffect(() => {
-    const key = `${centerpieceUrl}|${tier}|${level}|${milestone ?? ''}`;
+    const key = `${centerpieceUrl}|${tier}|${level}|${milestone ?? ''}|${templateId ?? ''}`;
     if (cache.has(key)) {
       setSrc(cache.get(key)!);
       return;
     }
 
     let cancelled = false;
-    const msParam = milestone !== undefined ? `&milestone=${milestone}` : '';
-    const url = `/api/v1/badges/preview?centerpiece_url=${encodeURIComponent(centerpieceUrl)}&tier=${tier}&level=${level}${msParam}`;
+    const params = new URLSearchParams({
+      centerpiece_url: centerpieceUrl,
+      tier: String(tier),
+      level: String(level),
+    });
+    if (milestone !== undefined) params.set('milestone', String(milestone));
+    if (templateId) params.set('template_id', templateId);
+    const url = `/api/v1/badges/preview?${params}`;
 
     fetch(url, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
       .then((r) => (r.ok ? r.blob() : null))
@@ -44,7 +51,7 @@ export default function FramePreview({ centerpieceUrl, tier, level, milestone, c
       .catch(() => {});
 
     return () => { cancelled = true; };
-  }, [centerpieceUrl, tier, level, token]);
+  }, [centerpieceUrl, tier, level, milestone, templateId, token]);
 
   if (!src) {
     return <div className={`rounded-lg bg-[--color-dp-200] animate-pulse ${className}`} />;

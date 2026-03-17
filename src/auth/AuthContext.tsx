@@ -11,6 +11,7 @@ interface AuthState {
   isAdmin: (orgId: string) => boolean;
   isOwner: (orgId: string) => boolean;
   getRole: (orgId: string) => OrgRole | null;
+  getOrgName: (orgId: string) => string | null;
   login: (tokens: Record<string, unknown>) => void;
   logout: () => void;
   startLogin: () => Promise<void>;
@@ -24,6 +25,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(() => localStorage.getItem(TOKEN_KEY));
   const [orgIds, setOrgIds] = useState<string[]>([]);
   const [orgRoles, setOrgRoles] = useState<Record<string, OrgRole>>({});
+  const [orgNames, setOrgNames] = useState<Record<string, string | null>>({});
   const [isLoading, setIsLoading] = useState(() => !!localStorage.getItem(TOKEN_KEY));
 
   const login = useCallback((tokens: Record<string, unknown>) => {
@@ -41,6 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(null);
     setOrgIds([]);
     setOrgRoles({});
+    setOrgNames({});
   }, []);
 
   // Proactive expiry: schedule logout when the token's exp is reached
@@ -88,13 +91,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (data?.organisations) {
           setOrgIds(data.organisations.map((o: { organisation_id: string }) => o.organisation_id));
           const roles: Record<string, OrgRole> = {};
-          data.organisations.forEach((o: { organisation_id: string; role: OrgRole }) => {
+          const names: Record<string, string | null> = {};
+          data.organisations.forEach((o: { organisation_id: string; role: OrgRole; organisation_name?: string | null }) => {
             roles[o.organisation_id] = o.role;
+            names[o.organisation_id] = o.organisation_name ?? null;
           });
           setOrgRoles(roles);
+          setOrgNames(names);
         }
       })
-      .catch(() => { setOrgIds([]); setOrgRoles({}); })
+      .catch(() => { setOrgIds([]); setOrgRoles({}); setOrgNames({}); })
       .finally(() => setIsLoading(false));
   }, [token]);
 
@@ -104,9 +110,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const getRole = useCallback((orgId: string): OrgRole | null => orgRoles[orgId] ?? null, [orgRoles]);
   const isAdmin = useCallback((orgId: string) => orgRoles[orgId] === 'admin' || orgRoles[orgId] === 'owner', [orgRoles]);
   const isOwner = useCallback((orgId: string) => orgRoles[orgId] === 'owner', [orgRoles]);
+  const getOrgName = useCallback((orgId: string): string | null => orgNames[orgId] ?? null, [orgNames]);
 
   return (
-    <AuthContext.Provider value={{ token, orgIds, isLoading, isMember, isAdmin, isOwner, getRole, login, logout, startLogin }}>
+    <AuthContext.Provider value={{ token, orgIds, isLoading, isMember, isAdmin, isOwner, getRole, getOrgName, login, logout, startLogin }}>
       {children}
     </AuthContext.Provider>
   );

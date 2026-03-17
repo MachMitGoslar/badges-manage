@@ -73,9 +73,10 @@ export interface BadgeTemplate {
   centerpiece_url: string | null;
   frame_tier: number | null;
   frame_level: number | null;
+  frame_template_id: string | null;
   organisation: { id: string; name: string | null } | null;
   // type-specific (present when badge_type matches)
-  tiers?: { level: number; amount: number; imageURL: string | null; name: string | null; text_awarded: string | null }[];
+  tiers?: { level: number; amount: number; imageURL: string | null; name: string | null; text_awarded: string | null; text_awarded_template?: string | null }[];
   collection_badges?: { id: string; text_condition: string; imageURL: string | null }[];
 }
 
@@ -106,6 +107,7 @@ export interface CreateBadgeInput {
   centerpiece_url?: string;
   frame_tier?: number | null;
   frame_level?: number | null;
+  frame_template_id?: string | null;
   // type-specific
   tiers?: { level: number; amount: number; imageURL?: string; name?: string | null; text_awarded?: string | null }[];
   required_badge_ids?: string[];
@@ -125,6 +127,14 @@ export interface CreateTokenInput {
   note?: string;
   max_uses?: number;
   expires_at?: string;
+}
+
+export interface FrameTemplateInfo {
+  id: string;
+  name: string;
+  description: string;
+  maxTiers: number;
+  levelsPerTier: number;
 }
 
 export interface OrgMember {

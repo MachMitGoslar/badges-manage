@@ -95,13 +95,19 @@ export default function OrgDetail() {
           {badgesData.badges.length === 0 && (
             <p className="text-[--color-dp-700]">No badges yet for this organisation.</p>
           )}
-          {badgesData.badges.map((badge) => (
+          {badgesData.badges.map((badge) => {
+            const highestTier = badge.badge_type === 'tiered' && badge.tiers?.length
+              ? badge.tiers[badge.tiers.length - 1]
+              : null;
+            const displayImage = highestTier?.imageURL ?? badge.imageURL;
+            const displayText = highestTier?.text_awarded ?? badge.text_awarded;
+            return (
             <div
               key={badge.id}
               className="card px-5 py-4 flex items-center gap-4"
             >
-              {badge.imageURL ? (
-                <img src={badge.imageURL} alt="" className="w-12 h-12 rounded object-cover bg-[--color-dp-200] shrink-0" />
+              {displayImage ? (
+                <img src={displayImage} alt="" className="w-12 h-12 rounded object-cover bg-[--color-dp-200] shrink-0" />
               ) : (
                 <div className="w-12 h-12 rounded bg-[--color-dp-200] shrink-0" />
               )}
@@ -113,7 +119,7 @@ export default function OrgDetail() {
                   )}
                 </div>
                 <p className="text-xs text-[--color-dp-800] truncate">{badge.text_condition}</p>
-                <p className="text-xs text-[--color-dp-700] truncate">{badge.text_awarded}</p>
+                {displayText && <p className="text-xs text-[--color-dp-700] truncate">{displayText}</p>}
                 <div className="flex gap-2 mt-1 flex-wrap">
                   <span className="badge badge-secondary">{badge.badge_type}</span>
                   {badge.points != null && (
@@ -161,7 +167,8 @@ export default function OrgDetail() {
                 </div>
               )}
             </div>
-          ))}
+          );
+          })}
         </div>
       )}
     </Layout>

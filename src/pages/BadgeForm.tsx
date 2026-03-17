@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useAuth } from '../auth/AuthContext.tsx';
-import { api, ApiError, type BadgeTemplate, type CreateBadgeInput } from '../api/client.ts';
+import { api, ApiError, type BadgeTemplate, type CreateBadgeInput, type FrameTemplateInfo } from '../api/client.ts';
 import Layout from '../components/Layout.tsx';
 import CenterpieceSelector from '../components/CenterpieceSelector.tsx';
 import FramePreview from '../components/FramePreview.tsx';
@@ -83,6 +83,7 @@ export default function BadgeForm() {
   const { orgId, badgeId } = useParams<{ orgId: string; badgeId?: string }>();
   const { token } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const isEdit = !!badgeId;
 
   const [step, setStep] = useState<Step>(isEdit ? 'fill' : 'pick-type');
@@ -96,6 +97,11 @@ export default function BadgeForm() {
   const { data: orgBadges } = useQuery({
     queryKey: ['badges', orgId],
     queryFn: () => api.get<{ badges: BadgeTemplate[] }>(`/api/v1/orgs/${orgId}/badges`, token),
+  });
+
+  const { data: frameTemplatesData } = useQuery({
+    queryKey: ['frame-templates'],
+    queryFn: () => api.get<{ templates: FrameTemplateInfo[] }>('/api/v1/badges/frame-templates', token),
   });
 
   const [form, setForm] = useState<Omit<CreateBadgeInput, 'tiers' | 'required_badge_ids'>>({
@@ -112,6 +118,7 @@ export default function BadgeForm() {
   const [frameTier, setFrameTier] = useState<number | null>(null);
   const [frameLevel, setFrameLevel] = useState<number | null>(null);
   const [categoryInput, setCategoryInput] = useState('');
+  const [frameTemplateId, setFrameTemplateId] = useState<string>('default');
   const [tiers, setTiers] = useState<TierRow[]>([{ amount: 5, imageURL: '', name: '', text_awarded: '' }]);
   const [requiredBadgeIds, setRequiredBadgeIds] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
@@ -139,9 +146,10 @@ export default function BadgeForm() {
         amount: t.amount,
         imageURL: t.imageURL ?? '',
         name: t.name ?? '',
-        text_awarded: t.text_awarded ?? '',
+        text_awarded: (t.text_awarded_template ?? t.text_awarded) ?? '',
       })));
     }
+    setFrameTemplateId(b.frame_template_id ?? 'default');
     if (b.badge_type === 'collection' && b.collection_badges?.length) {
       setRequiredBadgeIds(b.collection_badges.map((cb) => cb.id));
     }
@@ -214,6 +222,7 @@ export default function BadgeForm() {
       centerpiece_url: centerpieceUrl ?? undefined,
       frame_tier: frameTier ?? null,
       frame_level: frameLevel ?? null,
+      frame_template_id: frameTemplateId || null,
       category: categoryInput.split(',').map((s) => s.trim()).filter(Boolean),
     };
 
@@ -235,11 +244,13 @@ export default function BadgeForm() {
     try {
       if (isEdit) {
         await api.patch(`/api/v1/orgs/${orgId}/badges/${badgeId}`, token, payload);
+        queryClient.invalidateQueries({ queryKey: ['badge', orgId, badgeId] });
         toast.success('Badge updated');
       } else {
         await api.post(`/api/v1/orgs/${orgId}/badges`, token, payload);
         toast.success('Badge created');
       }
+      queryClient.invalidateQueries({ queryKey: ['badges', orgId] });
       navigate(`/orgs/${orgId}`);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Failed to save badge');
@@ -342,14 +353,16 @@ export default function BadgeForm() {
           />
         </Field>
 
-        <Field label="Awarded text">
-          <input
-            className="input input-sm"
-            value={form.text_awarded}
-            onChange={(e) => field('text_awarded', e.target.value)}
-            placeholder="e.g. Congratulations on attending!"
-          />
-        </Field>
+        {selectedType !== 'tiered' && (
+          <Field label="Awarded text">
+            <input
+              className="input input-sm"
+              value={form.text_awarded}
+              onChange={(e) => field('text_awarded', e.target.value)}
+              placeholder="e.g. Congratulations on attending!"
+            />
+          </Field>
+        )}
 
         {/* Centerpiece — shared across all tiers for tiered badges */}
         <div>
@@ -453,6 +466,26 @@ export default function BadgeForm() {
         {/* ── Tiered: tier/stage configuration ────────────────────────────────── */}
         {selectedType === 'tiered' && (
           <div className="space-y-3">
+            {/* Frame template selector */}
+            {(frameTemplatesData?.templates?.length ?? 0) > 1 && (
+              <Field label="Badge template">
+                <select
+                  className="input input-sm"
+                  value={frameTemplateId}
+                  onChange={(e) => setFrameTemplateId(e.target.value)}
+                >
+                  {frameTemplatesData!.templates.map((t) => (
+                    <option key={t.id} value={t.id}>{t.name}</option>
+                  ))}
+                </select>
+                {frameTemplatesData?.templates.find((t) => t.id === frameTemplateId)?.description && (
+                  <p className="text-xs text-[--color-dp-600] mt-1">
+                    {frameTemplatesData!.templates.find((t) => t.id === frameTemplateId)!.description}
+                  </p>
+                )}
+              </Field>
+            )}
+
             <div className="flex items-center justify-between">
               <span className="text-sm text-[--color-dp-800]">Stages &amp; levels</span>
               {tiers.length < 12 && (
@@ -508,8 +541,16 @@ export default function BadgeForm() {
                         className="input input-sm"
                         value={tier.text_awarded}
                         onChange={(e) => updateTierField(i, 'text_awarded', e.target.value)}
-                        placeholder="Shown when this tier is reached"
+                        placeholder={`e.g. You reached {amount} steps!`}
                       />
+                      <p className="text-[10px] text-[--color-dp-500] mt-0.5">
+                        Use <code className="bg-[--color-dp-100] px-0.5 rounded font-mono">{'{amount}'}</code> to embed the milestone number.
+                      </p>
+                      {tier.text_awarded.includes('{amount}') && (
+                        <p className="text-[10px] text-[--color-dp-700] mt-0.5">
+                          Preview: {tier.text_awarded.replace(/\{amount\}/g, String(tier.amount))}
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -528,7 +569,7 @@ export default function BadgeForm() {
                       {tierErrors[i] ? (
                         <p className="field-error">{tierErrors[i]}</p>
                       ) : i > 0 ? (
-                        <p className="text-xs text-[--color-dp-600] mt-1">prev: {tiers[i - 1].amount}</p>
+                        <p className="text-xs text-[--color-dp-600] mt-1">Must exceed tier {i} ({tiers[i - 1].amount})</p>
                       ) : null}
                     </div>
 
@@ -541,6 +582,7 @@ export default function BadgeForm() {
                           tier={(stageIndex + 1) as 1|2|3}
                           level={level as 1|2|3|4}
                           milestone={tier.amount}
+                          templateId={frameTemplateId || undefined}
                           className="w-16 h-16"
                         />
                       </div>

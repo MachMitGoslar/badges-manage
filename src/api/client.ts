@@ -127,6 +127,13 @@ export interface CreateTokenInput {
   expires_at?: string;
 }
 
+export interface OrgMember {
+  user_id: string;
+  role: 'member' | 'admin' | 'owner';
+  name: string | null;
+  email: string | null;
+}
+
 export interface Centerpiece {
   name: string;
   url: string;

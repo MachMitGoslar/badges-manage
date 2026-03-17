@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard.tsx';
 import OrgDetail from './pages/OrgDetail.tsx';
 import BadgeForm from './pages/BadgeForm.tsx';
 import TokenManager from './pages/TokenManager.tsx';
+import OrgMembers from './pages/OrgMembers.tsx';
 import DebugScreen from './pages/DebugScreen.tsx';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -56,6 +57,14 @@ export default function App() {
         element={
           <ProtectedRoute>
             <BadgeForm />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/orgs/:orgId/members"
+        element={
+          <ProtectedRoute>
+            <OrgMembers />
           </ProtectedRoute>
         }
       />

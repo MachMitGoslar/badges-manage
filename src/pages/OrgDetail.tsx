@@ -8,9 +8,10 @@ import Layout from '../components/Layout.tsx';
 
 export default function OrgDetail() {
   const { orgId } = useParams<{ orgId: string }>();
-  const { token, isMember } = useAuth();
+  const { token, isAdmin, isOwner } = useAuth();
   const queryClient = useQueryClient();
-  const canManage = isMember(orgId ?? '');
+  const canManage = isAdmin(orgId ?? '');
+  const canManageMembers = isOwner(orgId ?? '');
 
   const { data: orgData, isLoading: orgLoading } = useQuery({
     queryKey: ['org', orgId],
@@ -62,6 +63,14 @@ export default function OrgDetail() {
               >
                 Grant Tokens
               </Link>
+              {canManageMembers && (
+                <Link
+                  to={`/orgs/${orgId}/members`}
+                  className="btn btn-secondary btn-rounded"
+                >
+                  Members
+                </Link>
+              )}
             </div>
           )}
         </div>

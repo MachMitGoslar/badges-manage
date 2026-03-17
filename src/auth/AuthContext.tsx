@@ -1,11 +1,16 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
 import { startLogin as pkceStartLogin } from './pkce.ts';
 
+type OrgRole = 'member' | 'admin' | 'owner';
+
 interface AuthState {
   token: string | null;
   orgIds: string[];
   isLoading: boolean;
   isMember: (orgId: string) => boolean;
+  isAdmin: (orgId: string) => boolean;
+  isOwner: (orgId: string) => boolean;
+  getRole: (orgId: string) => OrgRole | null;
   login: (tokens: Record<string, unknown>) => void;
   logout: () => void;
   startLogin: () => Promise<void>;
@@ -18,6 +23,7 @@ const TOKEN_KEY = 'badges_manage_token';
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(() => localStorage.getItem(TOKEN_KEY));
   const [orgIds, setOrgIds] = useState<string[]>([]);
+  const [orgRoles, setOrgRoles] = useState<Record<string, OrgRole>>({});
   const [isLoading, setIsLoading] = useState(() => !!localStorage.getItem(TOKEN_KEY));
 
   const login = useCallback((tokens: Record<string, unknown>) => {
@@ -34,6 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('badges_manage_refresh');
     setToken(null);
     setOrgIds([]);
+    setOrgRoles({});
   }, []);
 
   // Proactive expiry: schedule logout when the token's exp is reached
@@ -80,18 +87,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .then((data) => {
         if (data?.organisations) {
           setOrgIds(data.organisations.map((o: { organisation_id: string }) => o.organisation_id));
+          const roles: Record<string, OrgRole> = {};
+          data.organisations.forEach((o: { organisation_id: string; role: OrgRole }) => {
+            roles[o.organisation_id] = o.role;
+          });
+          setOrgRoles(roles);
         }
       })
-      .catch(() => setOrgIds([]))
+      .catch(() => { setOrgIds([]); setOrgRoles({}); })
       .finally(() => setIsLoading(false));
   }, [token]);
 
   const startLogin = useCallback(() => pkceStartLogin(), []);
 
   const isMember = useCallback((orgId: string) => orgIds.includes(orgId), [orgIds]);
+  const getRole = useCallback((orgId: string): OrgRole | null => orgRoles[orgId] ?? null, [orgRoles]);
+  const isAdmin = useCallback((orgId: string) => orgRoles[orgId] === 'admin' || orgRoles[orgId] === 'owner', [orgRoles]);
+  const isOwner = useCallback((orgId: string) => orgRoles[orgId] === 'owner', [orgRoles]);
 
   return (
-    <AuthContext.Provider value={{ token, orgIds, isLoading, isMember, login, logout, startLogin }}>
+    <AuthContext.Provider value={{ token, orgIds, isLoading, isMember, isAdmin, isOwner, getRole, login, logout, startLogin }}>
       {children}
     </AuthContext.Provider>
   );

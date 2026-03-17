@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { useAuth } from '../auth/AuthContext.tsx';
 import { api, ApiError, type BadgeTemplate, type CreateBadgeInput } from '../api/client.ts';
 import Layout from '../components/Layout.tsx';
@@ -235,8 +236,10 @@ export default function BadgeForm() {
     try {
       if (isEdit) {
         await api.patch(`/api/v1/orgs/${orgId}/badges/${badgeId}`, token, payload);
+        toast.success('Badge updated');
       } else {
         await api.post(`/api/v1/orgs/${orgId}/badges`, token, payload);
+        toast.success('Badge created');
       }
       navigate(`/orgs/${orgId}`);
     } catch (e) {

@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router-dom';
+import { toast } from 'sonner';
 import { useAuth } from '../auth/AuthContext.tsx';
 import { api, ApiError, type Organisation, type BadgeTemplate } from '../api/client.ts';
 import Layout from '../components/Layout.tsx';
@@ -20,13 +22,17 @@ export default function OrgDetail() {
     queryFn: () => api.get<{ badges: BadgeTemplate[] }>(`/api/v1/orgs/${orgId}/badges`, token),
   });
 
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+
   async function deleteBadge(badgeId: string, name: string) {
-    if (!confirm(`Delete badge "${name}"? This will fail if any badges have been earned.`)) return;
     try {
       await api.delete(`/api/v1/orgs/${orgId}/badges/${badgeId}`, token);
       queryClient.invalidateQueries({ queryKey: ['org-badges', orgId] });
+      toast.success(`Badge "${name}" deleted`);
     } catch (e) {
-      alert(e instanceof ApiError ? e.message : 'Failed to delete badge');
+      toast.error(e instanceof ApiError ? e.message : 'Failed to delete badge');
+    } finally {
+      setConfirmDeleteId(null);
     }
   }
 
@@ -110,19 +116,39 @@ export default function OrgDetail() {
                 </div>
               </div>
               {canManage && (
-                <div className="flex gap-2 shrink-0">
-                  <Link
-                    to={`/orgs/${orgId}/badges/${badge.id}`}
-                    className="btn btn-sm btn-secondary btn-rounded"
-                  >
-                    Edit
-                  </Link>
-                  <button
-                    onClick={() => deleteBadge(badge.id, badge.name)}
-                    className="btn btn-sm btn-destructive btn-rounded"
-                  >
-                    Delete
-                  </button>
+                <div className="flex gap-2 shrink-0 items-center">
+                  {confirmDeleteId === badge.id ? (
+                    <>
+                      <span className="text-xs text-[--color-dp-800]">Delete?</span>
+                      <button
+                        onClick={() => deleteBadge(badge.id, badge.name)}
+                        className="btn btn-sm btn-destructive btn-rounded"
+                      >
+                        Yes
+                      </button>
+                      <button
+                        onClick={() => setConfirmDeleteId(null)}
+                        className="btn btn-sm btn-secondary btn-rounded"
+                      >
+                        No
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <Link
+                        to={`/orgs/${orgId}/badges/${badge.id}`}
+                        className="btn btn-sm btn-secondary btn-rounded"
+                      >
+                        Edit
+                      </Link>
+                      <button
+                        onClick={() => setConfirmDeleteId(badge.id)}
+                        className="btn btn-sm btn-destructive btn-rounded"
+                      >
+                        Delete
+                      </button>
+                    </>
+                  )}
                 </div>
               )}
             </div>

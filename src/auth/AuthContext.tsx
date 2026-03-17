@@ -21,7 +21,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(() => !!localStorage.getItem(TOKEN_KEY));
 
   const login = useCallback((tokens: Record<string, unknown>) => {
-    console.log('Logging in with tokens:', tokens);
     const accessToken = tokens.access_token as string;
     localStorage.setItem(TOKEN_KEY, accessToken);
     if (tokens.refresh_token) {

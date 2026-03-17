@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { QRCodeSVG } from 'qrcode.react';
+import { toast } from 'sonner';
 import { useAuth } from '../auth/AuthContext.tsx';
 import { api, ApiError, type BadgeTemplate, type GrantToken, type GrantLogEntry, type CreateTokenInput } from '../api/client.ts';
 import Layout from '../components/Layout.tsx';
@@ -100,6 +101,7 @@ export default function TokenManager() {
   const [createError, setCreateError] = useState('');
   const [qrToken, setQrToken] = useState<GrantToken | null>(null);
   const [expandedTokenId, setExpandedTokenId] = useState<string | null>(null);
+  const [confirmDeactivateId, setConfirmDeactivateId] = useState<string | null>(null);
 
   const grantUrl = (t: GrantToken) => t.grant_url ?? `${window.location.origin}/grant/${t.token}`;
 
@@ -123,6 +125,7 @@ export default function TokenManager() {
       setMaxUses('1');
       setExpiresAt('');
       queryClient.invalidateQueries({ queryKey: ['org-tokens', orgId] });
+      toast.success('Grant token created');
     } catch (e) {
       setCreateError(e instanceof ApiError ? e.message : 'Failed to create token');
     } finally {
@@ -265,12 +268,48 @@ export default function TokenManager() {
 
                   <div className="flex items-center gap-2 shrink-0">
                     {!exhausted && (
-                      <button
-                        onClick={() => setQrToken(t)}
-                        className="btn btn-sm btn-secondary btn-rounded"
-                      >
-                        Show QR
-                      </button>
+                      <>
+                        <button
+                          onClick={() => setQrToken(t)}
+                          className="btn btn-sm btn-secondary btn-rounded"
+                        >
+                          Show QR
+                        </button>
+                        {confirmDeactivateId === t.id ? (
+                          <>
+                            <span className="text-xs text-[--color-dp-800]">Deactivate?</span>
+                            <button
+                              onClick={async () => {
+                                try {
+                                  await api.delete(`/api/v1/orgs/${orgId}/grant-tokens/${t.id}`, token);
+                                  queryClient.invalidateQueries({ queryKey: ['org-tokens', orgId] });
+                                  toast.success('Token deactivated');
+                                } catch (e) {
+                                  toast.error(e instanceof ApiError ? e.message : 'Failed to deactivate token');
+                                } finally {
+                                  setConfirmDeactivateId(null);
+                                }
+                              }}
+                              className="btn btn-sm btn-destructive btn-rounded"
+                            >
+                              Yes
+                            </button>
+                            <button
+                              onClick={() => setConfirmDeactivateId(null)}
+                              className="btn btn-sm btn-secondary btn-rounded"
+                            >
+                              No
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            onClick={() => setConfirmDeactivateId(t.id)}
+                            className="btn btn-sm btn-destructive btn-rounded"
+                          >
+                            Deactivate
+                          </button>
+                        )}
+                      </>
                     )}
                     {exhausted && (
                       <span className="text-xs text-[--color-dp-600]">{!t.is_active ? 'Deactivated' : 'Exhausted'}</span>

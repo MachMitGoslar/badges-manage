@@ -6,7 +6,6 @@ import { useAuth } from '../auth/AuthContext.tsx';
 import { api, ApiError, type BadgeTemplate, type CreateBadgeInput } from '../api/client.ts';
 import Layout from '../components/Layout.tsx';
 import CenterpieceSelector from '../components/CenterpieceSelector.tsx';
-import BadgePreview from '../components/BadgePreview.tsx';
 import FramePreview from '../components/FramePreview.tsx';
 
 type BadgeType = 'normal' | 'tiered' | 'collection';
@@ -363,13 +362,13 @@ export default function BadgeForm() {
           <div className="flex items-start gap-4">
             <CenterpieceSelector orgId={orgId!} value={centerpieceUrl} onChange={setCenterpieceUrl} />
             {centerpieceUrl && (
-              <BadgePreview
-                centerpieceUrl={centerpieceUrl}
-                badgeType={selectedType}
-                tierLevel={1}
-                className="w-20 h-20"
-                title="Badge preview"
-              />
+              selectedType === 'tiered' ? (
+                <FramePreview centerpieceUrl={centerpieceUrl} tier={1} level={1} className="w-20 h-20" />
+              ) : frameTier && frameLevel ? (
+                <FramePreview centerpieceUrl={centerpieceUrl} tier={frameTier as 1|2|3} level={frameLevel as 1|2|3|4} className="w-20 h-20" />
+              ) : (
+                <img src={centerpieceUrl} alt="" className="w-20 h-20 rounded-lg object-contain bg-[--color-dp-100]" />
+              )
             )}
           </div>
         </div>
@@ -533,16 +532,16 @@ export default function BadgeForm() {
                       ) : null}
                     </div>
 
-                    {/* Preview: uses shared centerpieceUrl with this tier's level */}
+                    {/* Preview: server-rendered frame for this exact stage/level */}
                     {centerpieceUrl && (
                       <div className="shrink-0">
                         <label className="block text-xs text-[--color-dp-700] mb-1">Preview</label>
-                        <BadgePreview
+                        <FramePreview
                           centerpieceUrl={centerpieceUrl}
-                          badgeType="tiered"
-                          tierLevel={i + 1}
+                          tier={(stageIndex + 1) as 1|2|3}
+                          level={level as 1|2|3|4}
+                          milestone={tier.amount}
                           className="w-16 h-16"
-                          title={`${stageName} Stage Level ${level}`}
                         />
                       </div>
                     )}

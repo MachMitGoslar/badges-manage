@@ -29,6 +29,19 @@ export default function AuthCallback() {
 
     exchangeCode(code)
       .then((tokens) => {
+        const forApp = sessionStorage.getItem('pkce_for');
+        sessionStorage.removeItem('pkce_for');
+
+        // If this login was initiated by a popup from another app, relay the token back.
+        if (forApp && window.opener) {
+          window.opener.postMessage(
+            { type: `${forApp}-token`, token: tokens.access_token as string },
+            '*'
+          );
+          window.close();
+          return;
+        }
+
         login(tokens);
         navigate('/', { replace: true });
       })

@@ -36,3 +36,5 @@ pnpm-debug.log*
 
 # Claude Code instructions (local only)
 CLAUDE.md
+
+node_bak/

@@ -10,14 +10,15 @@
  *   - buildBadgePreviewUrl constructs the expected imgproxy URL
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach} from 'vitest';
 import { api, ApiError, buildBadgePreviewUrl } from '../../api/client.ts';
+
 
 // ── fetch mock helpers ────────────────────────────────────────────────────────
 
 function mockFetch(status: number, body?: unknown, headers?: Record<string, string>) {
   const jsonBody = body !== undefined ? JSON.stringify(body) : '';
-  global.fetch = vi.fn().mockResolvedValue({
+  globalThis.fetch = vi.fn().mockResolvedValue({
     ok: status >= 200 && status < 300,
     status,
     statusText: String(status),
@@ -129,7 +130,7 @@ describe('api.delete', () => {
   afterEach(() => vi.restoreAllMocks());
 
   it('returns undefined on 204 No Content', async () => {
-    global.fetch = vi.fn().mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       status: 204,
       statusText: 'No Content',

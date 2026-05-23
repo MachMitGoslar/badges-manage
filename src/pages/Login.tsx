@@ -1,9 +1,17 @@
+import { useEffect } from 'react';
 import { useAuth } from '../auth/AuthContext.tsx';
 import { Navigate } from 'react-router-dom';
 import ciLogo from '../assets/corporate_logo_best_badges.svg';
 
 export default function Login() {
   const { token, startLogin } = useAuth();
+
+  // Auto-trigger login when opened as a popup from another app (e.g., best-badges)
+  useEffect(() => {
+    const forApp = new URLSearchParams(window.location.search).get('for');
+    if (forApp) startLogin();
+  }, []);
+
   if (token) return <Navigate to="/" replace />;
 
   return (

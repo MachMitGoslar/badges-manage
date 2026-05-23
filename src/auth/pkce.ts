@@ -38,6 +38,11 @@ export async function startLogin(): Promise<void> {
 
   sessionStorage.setItem(VERIFIER_KEY, verifier);
 
+  // If launched via a popup from another app (e.g., best-badges), store the origin
+  // so AuthCallback can postMessage the token back instead of navigating.
+  const forApp = new URLSearchParams(window.location.search).get('for');
+  if (forApp) sessionStorage.setItem('pkce_for', forApp);
+
   const redirectUri = window.location.origin + REDIRECT_PATH;
   const authUrl = new URL(discovery.authorization_endpoint);
   authUrl.searchParams.set('response_type', 'code');
